@@ -654,7 +654,7 @@
       const dom = window.engine3D?.renderer?.domElement;
       if (!dom) return;
 
-      const isCurrentlyLocked = (document.pointerLockElement === dom);
+      const isCurrentlyLocked = !!(document.pointerLockElement);
 
       if (isCurrentlyLocked) {
         if (document.exitPointerLock) {

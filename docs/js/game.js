@@ -288,8 +288,10 @@ class GameEngine {
       let moveDx = 0;
       let moveDz = 0;
 
-      if (viewMode === 'ACTION_RPG') {
-        // Intuitive Isometric Movement:
+      const isPointerLocked = !!(window.engine3D?.isPointerLocked || document.pointerLockElement);
+
+      if (viewMode === 'ACTION_RPG' && !isPointerLocked) {
+        // Intuitive Isometric Movement (Free Mouse Cursor Mode):
         // W = moves forward/up (-Z), S = back/down (+Z), A = left (-X), D = right (+X)
         moveDx = normX * this.player.speed * dt;
         moveDz = normZ * this.player.speed * dt;
@@ -305,18 +307,25 @@ class GameEngine {
         while (diff > Math.PI) diff -= Math.PI * 2;
         this.player.angle += diff * Math.min(1.0, dt * 14);
       } else {
-        // Camera-Relative Movement (Over-Shoulder / 1st Person)
-        // Forward vector into screen along negative Z:
-        const forwardX = -Math.sin(this.player.angle);
-        const forwardZ = -Math.cos(this.player.angle);
-        // Right vector along screen right:
-        const rightX = Math.cos(this.player.angle);
-        const rightZ = -Math.sin(this.player.angle);
+        // Camera-Relative Movement (Over-Shoulder / 1st Person / Action RPG with Mouse Lock)
+        // Uses the current camera / player angle so W ALWAYS moves forward into the view!
+        const angle = (viewMode === 'ACTION_RPG')
+          ? (typeof window.engine3D?.cameraYawOffset === 'number' ? window.engine3D.cameraYawOffset : this.player.angle)
+          : this.player.angle;
+
+        const forwardX = -Math.sin(angle);
+        const forwardZ = -Math.cos(angle);
+        const rightX = Math.cos(angle);
+        const rightZ = -Math.sin(angle);
 
         // normZ = -1 for 'W' (Forward), +1 for 'S' (Back)
         // normX = -1 for 'A' (Strafe Left), +1 for 'D' (Strafe Right)
         moveDx = (forwardX * (-normZ) + rightX * normX) * this.player.speed * dt;
         moveDz = (forwardZ * (-normZ) + rightZ * normX) * this.player.speed * dt;
+
+        if (viewMode === 'ACTION_RPG' && isPointerLocked) {
+          this.player.angle = angle;
+        }
       }
 
       // Smooth Wall Collision with Wall Sliding (Separate X and Z checks)
@@ -352,7 +361,13 @@ class GameEngine {
     // Sync positions with Three.js engine
     if (window.engine3D) {
       window.engine3D.playerPos.set(this.player.worldX, 0, this.player.worldZ);
-      window.engine3D.playerAngle = this.player.angle;
+      const isMouseControlling = !!(window.engine3D.isPointerLocked || document.pointerLockElement || window.engine3D.isMouseDragging);
+      if (isMouseControlling) {
+        // Pointer lock or right-click drag is actively rotating the hero via mouse
+        this.player.angle = window.engine3D.playerAngle;
+      } else {
+        window.engine3D.playerAngle = this.player.angle;
+      }
     }
 
     // Update grid position & recalculate FOV

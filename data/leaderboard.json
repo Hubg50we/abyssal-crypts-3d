@@ -189,6 +189,24 @@
     "date": "2026-10-10 22:23"
   },
   {
+    "name": "AIBot_Hero",
+    "hero_class": "Warrior",
+    "floor": 4,
+    "gold": 580,
+    "kills": 32,
+    "score": 4120,
+    "date": "2026-10-10 22:35"
+  },
+  {
+    "name": "AIBot_Hero",
+    "hero_class": "Warrior",
+    "floor": 4,
+    "gold": 580,
+    "kills": 32,
+    "score": 4120,
+    "date": "2026-10-10 22:38"
+  },
+  {
     "name": "Elysia Shadowstep",
     "hero_class": "Rogue",
     "floor": 3,

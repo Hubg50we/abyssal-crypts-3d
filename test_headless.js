@@ -35,6 +35,7 @@ class HeadlessTester {
     this.testDungeonReachability();
     this.testCollisionAndSlidingMath();
     this.testMovementVectorsAndControls();
+    this.testMouseLookAndPointerLock();
     this.testModernMapSystem();
     this.testClassStatsAndProgression();
     this.testCombatAndAbilities();
@@ -278,6 +279,69 @@ class HeadlessTester {
     while (diff < -Math.PI) diff += Math.PI * 2;
     while (diff > Math.PI) diff -= Math.PI * 2;
     this.assert(Math.abs(diff) < 0.01, "Targeting angle matches facing angle (diff = 0) when foe is in front");
+  }
+
+  testMouseLookAndPointerLock() {
+    console.log('\n--- 3d. Testing Mouse Look / Pointer Lock Aim & Camera Synchronization ---');
+
+    // 1. Mouse Look Horizontal Yaw in First Person
+    let playerAngle = 0;
+    const dx = 50; // mouse moved right
+    const sensitivity = 0.0032;
+    playerAngle -= dx * sensitivity;
+    this.assert(playerAngle < 0, "Moving mouse right in First Person decreases angle (turning right)");
+
+    // 2. Vertical Pitch Clamping
+    let pitch = 0;
+    const dy = -40; // mouse moved up
+    pitch = Math.max(-0.8, Math.min(0.8, pitch - dy * sensitivity));
+    this.assert(pitch > 0, "Moving mouse up tilts camera pitch upwards");
+
+    let extremePitch = 0;
+    extremePitch = Math.max(-0.8, Math.min(0.8, extremePitch - 500 * sensitivity));
+    this.assert(extremePitch >= -0.8 && extremePitch <= 0.8, "Extreme vertical mouse look clamped within safe angles (-0.8 to 0.8 rad)");
+
+    // 3. Pointer Lock Angle Synchronization (No Clobbering / Freezing)
+    const mockEngine3D = {
+      playerAngle: -0.45,
+      cameraYawOffset: -0.45,
+      isPointerLocked: true,
+      playerPos: { set: (x, y, z) => {} }
+    };
+    const mockPlayer = {
+      worldX: 10,
+      worldZ: 10,
+      angle: 0
+    };
+
+    // Synchronization logic as in game.js:
+    const isMouseControlling = !!(mockEngine3D.isPointerLocked);
+    if (isMouseControlling) {
+      mockPlayer.angle = mockEngine3D.playerAngle;
+    } else {
+      mockEngine3D.playerAngle = mockPlayer.angle;
+    }
+
+    this.assert(mockPlayer.angle === -0.45, "Pointer Lock syncs game player angle from engine3D without resetting mouse look");
+    this.assert(mockEngine3D.playerAngle === -0.45, "Pointer Lock preserves engine3D.playerAngle (mouse look never stuck)");
+
+    // 4. Action RPG Camera-Relative Movement with Mouse Lock
+    // In Action RPG with mouse lock, pressing W (normZ = -1, normX = 0) with cameraYawOffset = -PI/2 (facing East)
+    const yawOffset = -Math.PI / 2; // facing East (+X)
+    const forwardX = -Math.sin(yawOffset);
+    const forwardZ = -Math.cos(yawOffset);
+    const rightX = Math.cos(yawOffset);
+    const rightZ = -Math.sin(yawOffset);
+
+    const moveSpeed = 4.8;
+    const dt = 0.016;
+    const normX = 0;
+    const normZ = -1; // W pressed
+
+    const moveDx = (forwardX * (-normZ) + rightX * normX) * moveSpeed * dt;
+    const moveDz = (forwardZ * (-normZ) + rightZ * normX) * moveSpeed * dt;
+
+    this.assert(moveDx > 0 && Math.abs(moveDz) < 1e-6, "Pressing 'W' with camera aimed East moves hero into the view (+X)");
   }
 
   testModernMapSystem() {

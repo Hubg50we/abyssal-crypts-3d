@@ -139,36 +139,46 @@ class Engine3D {
     });
 
     window.addEventListener('mousemove', (e) => {
-      // 1. Pointer-Lock FPS/3rd-Person Free Mouse Look
-      if (document.pointerLockElement === dom) {
-        const dx = e.movementX || 0;
-        const dy = e.movementY || 0;
+      // 1. Pointer-Lock FPS / 3rd-Person / Action RPG Free Mouse Look
+      const isLocked = !!(document.pointerLockElement || this.isPointerLocked);
+      if (isLocked) {
+        const dx = (e.movementX !== undefined && e.movementX !== null)
+          ? e.movementX
+          : (e.mozMovementX || e.webkitMovementX || 0);
+        const dy = (e.movementY !== undefined && e.movementY !== null)
+          ? e.movementY
+          : (e.mozMovementY || e.webkitMovementY || 0);
         const sensitivity = 0.0032;
 
         if (this.viewMode === 'FIRST_PERSON') {
           this.playerAngle -= dx * sensitivity;
           if (window.gameEngine?.player) {
-            window.gameEngine.player.facingAngle = this.playerAngle;
+            window.gameEngine.player.angle = this.playerAngle;
           }
           this.pitch = Math.max(-0.8, Math.min(0.8, this.pitch - dy * sensitivity));
         } else if (this.viewMode === 'OVER_SHOULDER') {
           this.playerAngle -= dx * sensitivity;
           if (window.gameEngine?.player) {
-            window.gameEngine.player.facingAngle = this.playerAngle;
+            window.gameEngine.player.angle = this.playerAngle;
           }
           this.cameraPitchOffset = Math.max(-0.5, Math.min(0.6, this.cameraPitchOffset - dy * sensitivity));
         } else {
-          // Action RPG View
+          // Action RPG View with Mouse Lock:
+          // Moving mouse horizontally orbits the camera and aligns hero facing angle
           this.cameraYawOffset -= dx * sensitivity;
           this.cameraPitchOffset = Math.max(-0.5, Math.min(0.6, this.cameraPitchOffset - dy * sensitivity));
+          this.playerAngle = this.cameraYawOffset;
+          if (window.gameEngine?.player) {
+            window.gameEngine.player.angle = this.playerAngle;
+          }
         }
         return;
       }
 
       // 2. Right-Click Drag Orbit
       if (this.isMouseDragging) {
-        const dx = e.clientX - this.lastMouseX;
-        const dy = e.clientY - this.lastMouseY;
+        const dx = (e.clientX - this.lastMouseX) || (e.movementX || 0);
+        const dy = (e.clientY - this.lastMouseY) || (e.movementY || 0);
         this.lastMouseX = e.clientX;
         this.lastMouseY = e.clientY;
 
@@ -180,7 +190,7 @@ class Engine3D {
         if (this.viewMode === 'FIRST_PERSON' || this.viewMode === 'OVER_SHOULDER') {
           this.playerAngle -= dx * sensitivity;
           if (window.gameEngine?.player) {
-            window.gameEngine.player.facingAngle = this.playerAngle;
+            window.gameEngine.player.angle = this.playerAngle;
           }
         }
       }
@@ -201,7 +211,7 @@ class Engine3D {
 
     // Comprehensive Pointer Lock Change Listener (Sync On-Screen HUD & Reticle)
     document.addEventListener('pointerlockchange', () => {
-      const isLocked = (document.pointerLockElement === dom);
+      const isLocked = !!(document.pointerLockElement);
       this.isPointerLocked = isLocked;
       if (isLocked) {
         this.mouseLookActive = true;
@@ -285,10 +295,13 @@ class Engine3D {
   cycleCameraMode() {
     if (this.viewMode === 'ACTION_RPG') {
       this.viewMode = 'OVER_SHOULDER';
+      this.playerAngle = this.cameraYawOffset;
+      if (window.gameEngine?.player) window.gameEngine.player.angle = this.playerAngle;
     } else if (this.viewMode === 'OVER_SHOULDER') {
       this.viewMode = 'FIRST_PERSON';
     } else {
       this.viewMode = 'ACTION_RPG';
+      this.cameraYawOffset = this.playerAngle;
     }
 
     this.updateCameraVisibility();
@@ -300,7 +313,7 @@ class Engine3D {
       window.toggleMouseLockOnScreen();
     } else {
       const dom = this.renderer?.domElement;
-      if (document.pointerLockElement === dom) {
+      if (document.pointerLockElement) {
         document.exitPointerLock?.();
       } else {
         dom?.requestPointerLock?.();
@@ -1307,7 +1320,7 @@ class Engine3D {
       this.camera.lookAt(
         this.playerPos.x,
         this.playerPos.y + 0.9,
-        this.playerPos.z - 0.4
+        this.playerPos.z
       );
     } else if (this.viewMode === 'OVER_SHOULDER') {
       // Over the shoulder 3rd person with mouse orbit & pitch
