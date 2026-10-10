@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Abyssal Crypts 3D — 2026 Action RPG Roguelike</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top Navigation & Global HUD -->
+  <header class="game-header">
+    <div class="brand-section">
+      <h1 class="game-title">⚔ THE ABYSSAL CRYPTS 3D</h1>
+    </div>
+
+    <div class="hud-stats-row">
+      <div class="hud-item floor" id="hudFloor">3D Floor 1 : The Crypts</div>
+      <div class="hud-item gold" id="hudGold">0 G</div>
+      <div class="hud-item" id="hudScore">Score: 0</div>
+    </div>
+
+    <div class="header-controls">
+      <button class="icon-btn" id="btnCameraToggle" title="Cycle Camera Mode: Action RPG / 3rd Person / 1st Person [V]">🎥 Action RPG 3D</button>
+      <button class="icon-btn" id="btnTacticalMap" title="Open Holographic Tactical Map [M]" onclick="window.modernMap?.toggleTacticalModal()">🗺 Map [M]</button>
+      <button class="icon-btn" id="btnControlMode" title="Toggle A/D Controls: Strafe vs Turn [T]">🕹 A/D: Strafe</button>
+      <button class="icon-btn" id="btnAiBotToggle" title="Toggle AI Bot Autonomous Playtester" style="color: var(--color-gold); border-color: rgba(255,184,48,0.4);">🤖 AI Bot: Auto Play</button>
+      <button class="icon-btn" id="btnAiDiagnostics" title="Run Automated AI Diagnostics Test Suite">🧪 Run Tests</button>
+      <button class="icon-btn" id="btnSpeedToggle" title="Adjust Walking Pacing">🏃 Move: Agile</button>
+      <button class="icon-btn" id="btnAudioToggle" title="Toggle Sound">🔊 Audio</button>
+      <button class="icon-btn" id="btnLeaderboard" title="View High Scores">🏆 Hall of Fame</button>
+      <button class="icon-btn" id="btnControls" title="How to Play">❓ Controls</button>
+    </div>
+  </header>
+
+  <!-- Main Game Stage -->
+  <main class="main-viewport">
+    
+    <!-- 3D WebGL Canvas Display -->
+    <section class="canvas-wrapper" id="canvasContainer">
+      <canvas id="gameCanvas"></canvas>
+
+      <!-- 2026 Modern In-Game Floating HUD Holographic Radar (Top-Right) -->
+      <div class="hud-radar-container" id="hudRadarContainer">
+        <div class="radar-card">
+          <!-- Compass Ring -->
+          <div class="radar-compass-ring">
+            <span class="compass-marker marker-n">N</span>
+            <span class="compass-marker marker-e">E</span>
+            <span class="compass-marker marker-s">S</span>
+            <span class="compass-marker marker-w">W</span>
+          </div>
+
+          <!-- Radar High-DPI Canvas -->
+          <canvas id="hudRadarCanvas" width="190" height="190"></canvas>
+
+          <!-- Quick Micro Controls -->
+          <div class="radar-quick-controls">
+            <button class="radar-btn" id="btnRadarZoomIn" title="Zoom In [+]" onclick="window.modernMap?.zoomRadar(0.3)">+</button>
+            <button class="radar-btn" id="btnRadarZoomOut" title="Zoom Out [-]" onclick="window.modernMap?.zoomRadar(-0.3)">−</button>
+            <button class="radar-btn" id="btnRadarExpand" title="Expand Full Tactical Map [M]" onclick="window.modernMap?.toggleTacticalModal()">🗺</button>
+          </div>
+        </div>
+
+        <!-- Live Telemetry Badge -->
+        <div class="radar-telemetry" id="radarTelemetry">
+          <span id="radarFloorText">3D Floor 1</span>
+          <span style="color: rgba(255,255,255,0.2);">|</span>
+          <span id="radarCoordText">X: 0, Y: 0</span>
+          <span class="bearing-chip" id="radarBearingText">000° N</span>
+        </div>
+      </div>
+
+      <div class="canvas-overlay-hints">
+        <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move</span>
+        <span><kbd>T</kbd> Strafe/Turn</span>
+        <span><kbd>M</kbd> Tactical Map</span>
+        <span><kbd>Space</kbd> / Click: Attack</span>
+        <span><kbd>Q</kbd>/<kbd>E</kbd>/<kbd>R</kbd> Skills</span>
+        <span><kbd>1</kbd>-<kbd>6</kbd> Items</span>
+        <span><kbd>V</kbd> Camera</span>
+      </div>
+
+      <!-- On-Screen Virtual Action D-Pad -->
+      <div style="position: absolute; bottom: 14px; right: 14px; display: grid; grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(3, 44px); gap: 4px; z-index: 5;">
+        <div></div>
+        <button class="icon-btn" style="padding: 0; justify-content: center; font-size: 1.1rem;" 
+          onmousedown="window.gameEngine?.keysDown.add('w')" onmouseup="window.gameEngine?.keysDown.delete('w')"
+          ontouchstart="window.gameEngine?.keysDown.add('w')" ontouchend="window.gameEngine?.keysDown.delete('w')" title="Move Up [W]">▲</button>
+        <div></div>
+        <button class="icon-btn" style="padding: 0; justify-content: center; font-size: 1.1rem;" 
+          onmousedown="window.gameEngine?.keysDown.add('a')" onmouseup="window.gameEngine?.keysDown.delete('a')"
+          ontouchstart="window.gameEngine?.keysDown.add('a')" ontouchend="window.gameEngine?.keysDown.delete('a')" title="Move Left [A]">◀</button>
+        <button class="icon-btn" style="padding: 0; justify-content: center; background: rgba(255,184,48,0.25); color: var(--color-gold); font-size: 1.2rem;" 
+          onclick="window.gameEngine?.triggerPlayerAttack()" title="Attack / Slash [Space / Click]">⚔</button>
+        <button class="icon-btn" style="padding: 0; justify-content: center; font-size: 1.1rem;" 
+          onmousedown="window.gameEngine?.keysDown.add('d')" onmouseup="window.gameEngine?.keysDown.delete('d')"
+          ontouchstart="window.gameEngine?.keysDown.add('d')" ontouchend="window.gameEngine?.keysDown.delete('d')" title="Move Right [D]">▶</button>
+        <div></div>
+        <button class="icon-btn" style="padding: 0; justify-content: center; font-size: 1.1rem;" 
+          onmousedown="window.gameEngine?.keysDown.add('s')" onmouseup="window.gameEngine?.keysDown.delete('s')"
+          ontouchstart="window.gameEngine?.keysDown.add('s')" ontouchend="window.gameEngine?.keysDown.delete('s')" title="Move Down [S]">▼</button>
+        <div></div>
+      </div>
+    </section>
+
+    <!-- Sidebar Dashboard -->
+    <aside class="sidebar-panel">
+
+      <!-- Hero Vitality & Arcana -->
+      <section class="glass-card">
+        <h2 class="card-title">Adventurer Status</h2>
+        <div class="stat-bar-group">
+          <div>
+            <div class="stat-label-row">
+              <span style="color: var(--color-red);">Health</span>
+              <span id="hpText">120 / 120</span>
+            </div>
+            <div class="stat-bar-track">
+              <div class="stat-bar-fill hp" id="hpFill" style="width: 100%;"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="stat-label-row">
+              <span style="color: var(--color-cyan);">Mana / Energy</span>
+              <span id="manaText">60 / 60</span>
+            </div>
+            <div class="stat-bar-track">
+              <div class="stat-bar-fill mana" id="manaFill" style="width: 100%;"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="stat-label-row">
+              <span style="color: var(--color-purple);">Experience</span>
+              <span id="xpText">Lv.1 (0/50)</span>
+            </div>
+            <div class="stat-bar-track">
+              <div class="stat-bar-fill xp" id="xpFill" style="width: 0%;"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Active Abilities -->
+      <section class="glass-card">
+        <h2 class="card-title">Active Skills (Keys [Q, E, R])</h2>
+        <div class="abilities-grid" id="abilitiesContainer">
+          <!-- Populated dynamically based on hero class -->
+        </div>
+      </section>
+
+      <!-- Equipment Slots -->
+      <section class="glass-card">
+        <h2 class="card-title">Equipped Gear</h2>
+        <div class="equipment-slots">
+          <div class="eq-row">
+            <span class="eq-type">Weapon:</span>
+            <span class="eq-val" id="eqWeapon">Tempered Broadsword</span>
+          </div>
+          <div class="eq-row">
+            <span class="eq-type">Armor:</span>
+            <span class="eq-val" id="eqArmor">Chainmail Coat</span>
+          </div>
+          <div class="eq-row">
+            <span class="eq-type">Relic:</span>
+            <span class="eq-val" id="eqRelic">None</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Quick Inventory -->
+      <section class="glass-card">
+        <h2 class="card-title">Inventory (Keys [1-6])</h2>
+        <div class="quick-inv-grid" id="quickInventoryList">
+          <!-- Populated dynamically -->
+        </div>
+      </section>
+
+      <!-- Modern Tactical Sensor (Sidebar) -->
+      <section class="glass-card tactical-scanner-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <h2 class="card-title" style="margin: 0;">Tactical Sensor</h2>
+          <span class="exploration-badge" id="hudExplorationPct">0% Mapped</span>
+        </div>
+        
+        <div class="exploration-track">
+          <div class="exploration-fill" id="hudExplorationFill" style="width: 0%;"></div>
+        </div>
+
+        <div class="sensor-stats-grid">
+          <div class="sensor-stat">
+            <span class="stat-icon">💀</span>
+            <div class="stat-val" id="sensorFoesCount">0</div>
+            <div class="stat-lbl">Foes Active</div>
+          </div>
+          <div class="sensor-stat">
+            <span class="stat-icon">💎</span>
+            <div class="stat-val" id="sensorLootCount">0</div>
+            <div class="stat-lbl">Relics / Loot</div>
+          </div>
+          <div class="sensor-stat">
+            <span class="stat-icon">⚡</span>
+            <div class="stat-val" id="sensorStairsStatus" style="color: var(--color-cyan);">Searching...</div>
+            <div class="stat-lbl">Descent Gate</div>
+          </div>
+        </div>
+
+        <button class="btn-primary" style="margin-top: 10px; width: 100%; padding: 8px; font-size: 0.82rem;" onclick="window.modernMap?.toggleTacticalModal()">
+          🗺 EXPAND TACTICAL MAP [M]
+        </button>
+      </section>
+
+      <!-- Chronicle / Combat Log -->
+      <section class="glass-card">
+        <h2 class="card-title">Chronicle Log</h2>
+        <div class="combat-log-box" id="combatLogContainer">
+          <!-- Dynamic logs -->
+        </div>
+      </section>
+
+    </aside>
+
+  </main>
+
+  <!-- ========================================================================
+       MODALS & DIALOGS
+       ======================================================================== -->
+
+  <!-- Hero Class Selection Dialog -->
+  <dialog id="titleModal" open>
+    <div class="modal-header">
+      <h2 class="modal-title">THE ABYSSAL CRYPTS 3D</h2>
+      <p class="modal-subtitle">Choose your adventurer to delve into the 3D subterranean darkness</p>
+    </div>
+
+    <div class="class-grid">
+      <div class="class-card" onclick="selectClass('Warrior')">
+        <div class="class-icon">🛡</div>
+        <div class="class-name">Warrior</div>
+        <div class="class-perk">Heavy iron blade, high health, crushing Whirlwind cleave & Shield Bash.</div>
+      </div>
+
+      <div class="class-card" onclick="selectClass('Mage')">
+        <div class="class-icon">🔮</div>
+        <div class="class-name">Mage</div>
+        <div class="class-perk">Ranged Arcane Bolts, 3D Meteor blasts, and Astral Shift teleportation.</div>
+      </div>
+
+      <div class="class-card" onclick="selectClass('Rogue')">
+        <div class="class-icon">🗡</div>
+        <div class="class-name">Rogue</div>
+        <div class="class-perk">High evasion, 200% lethal critical strikes, and lingering poison darts.</div>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="selectClass('Warrior')">ENTER THE 3D DUNGEON AS WARRIOR</button>
+  </dialog>
+
+  <!-- Stairs Descend In-Game Dialog -->
+  <dialog id="descendModal">
+    <div class="modal-header">
+      <h2 class="modal-title" style="color: var(--color-cyan);">⚔ STAIRS OF THE ABYSS</h2>
+      <p class="modal-subtitle" id="descendPromptText">A stone staircase leads down into darker catacombs...</p>
+    </div>
+
+    <div style="display: flex; gap: 12px; margin-top: 20px;">
+      <button class="btn-primary" style="flex: 1;" onclick="window.gameEngine?.confirmDescend()">DESCEND DEEPER</button>
+      <button class="icon-btn" style="flex: 1; justify-content: center;" onclick="document.getElementById('descendModal').close()">STAY & EXPLORE</button>
+    </div>
+  </dialog>
+
+  <!-- Game Over Dialog -->
+  <dialog id="gameOverModal">
+    <div class="modal-header">
+      <h2 class="modal-title" style="color: var(--color-red);">💀 FALLEN HERO</h2>
+      <p class="modal-subtitle" id="deathReasonText">Your spirit wanders the obsidian depths...</p>
+    </div>
+
+    <div style="margin: 20px 0; background: rgba(0,0,0,0.5); padding: 16px; border-radius: 8px;">
+      <p style="margin-bottom: 6px;">Final Score: <strong id="finalScoreText" style="color: var(--color-gold);">0</strong></p>
+      <p style="margin-bottom: 6px;">Floor Reached: <strong id="finalFloorText" style="color: var(--color-cyan);">1</strong></p>
+      <p>Monsters Slain: <strong id="finalKillsText" style="color: var(--color-red);">0</strong></p>
+    </div>
+
+    <button class="btn-primary" onclick="restartGame()">DELVE AGAIN</button>
+  </dialog>
+
+  <!-- Victory Dialog -->
+  <dialog id="victoryModal">
+    <div class="modal-header">
+      <h2 class="modal-title" style="color: var(--color-gold);">🏆 ABYSSAL CONQUEROR</h2>
+      <p class="modal-subtitle">The Arch-Lich Malakor has fallen! The 3D catacombs are liberated!</p>
+    </div>
+
+    <div style="margin: 20px 0; background: rgba(0,0,0,0.5); padding: 16px; border-radius: 8px;">
+      <p style="margin-bottom: 6px;">Glorious Score: <strong id="vicScoreText" style="color: var(--color-gold);">0</strong></p>
+      <p style="margin-bottom: 6px;">Gold Plundered: <strong id="vicGoldText" style="color: var(--color-gold);">0</strong></p>
+      <p>Monsters Banished: <strong id="vicKillsText" style="color: var(--color-green);">0</strong></p>
+    </div>
+
+    <button class="btn-primary" onclick="restartGame()">COMMENCE NEW SAGA</button>
+  </dialog>
+
+  <!-- Hall of Fame / Leaderboard Dialog -->
+  <dialog id="leaderboardModal">
+    <div class="modal-header">
+      <h2 class="modal-title">🏆 HALL OF FAME</h2>
+      <p class="modal-subtitle">Record of the bravest dungeon crawlers preserved in Python backend</p>
+    </div>
+
+    <div style="max-height: 320px; overflow-y: auto;">
+      <table class="scores-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Hero</th>
+            <th>Class</th>
+            <th>Floor</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboardBody">
+          <!-- Populated from /api/scores -->
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top: 20px;">
+      <button class="btn-primary" onclick="document.getElementById('leaderboardModal').close()">CLOSE</button>
+    </div>
+  </dialog>
+
+  <!-- Controls Help Dialog -->
+  <dialog id="controlsModal">
+    <div class="modal-header">
+      <h2 class="modal-title">HOW TO PLAY IN 3D</h2>
+      <p class="modal-subtitle">Modern 2026 Fluid 3D Action RPG Mechanics</p>
+    </div>
+
+    <div style="line-height: 1.6; font-size: 0.9rem; color: #dcdde1;">
+      <p style="margin-bottom: 12px;"><strong>Movement:</strong>
+        <br>• <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd>: <strong>Smooth continuous 3D movement</strong> with full wall-sliding physics.
+        <br>• In <strong>Action RPG view</strong>: <kbd>A</kbd> moves & turns Left, <kbd>D</kbd> moves & turns Right.
+        <br>• In <strong>3rd Person / 1st Person</strong>: Press <kbd>T</kbd> or click <strong>🕹 A/D</strong> in header to toggle between:
+        <br>&nbsp;&nbsp;• <em>Strafe Mode</em>: <kbd>A</kbd>/<kbd>D</kbd> strafes Left/Right, <kbd>Q</kbd>/<kbd>E</kbd> or Arrow keys turn.
+        <br>&nbsp;&nbsp;• <em>Turn Mode</em>: <kbd>A</kbd>/<kbd>D</kbd> turns camera Left/Right, <kbd>Q</kbd>/<kbd>E</kbd> strafes.
+      </p>
+      <p style="margin-bottom: 12px;"><strong>Combat:</strong>
+        <br>• <kbd>Space</kbd> or <strong>Left-Click</strong>: <strong>Attack & Slash</strong> in real-time with your equipped weapon!
+        <br>• Monsters take damage, get knocked back, and drop loot upon defeat.
+      </p>
+      <p style="margin-bottom: 12px;"><strong>Skills & Magic:</strong>
+        <br>• <kbd>Q</kbd>, <kbd>E</kbd>, <kbd>R</kbd>: Cast your class's active abilities (Whirlwind, Shield Bash, Arcane Bolt, Meteor Blast, Blink Teleport, Shadow Dash, Poison Dart)!
+      </p>
+      <p style="margin-bottom: 12px;"><strong>Items & Gear:</strong>
+        <br>• <kbd>1</kbd> - <kbd>6</kbd>: Quick-drink potions or cast scrolls from inventory.
+        <br>• Walk near gold and treasure to automatically pick them up!
+      </p>
+      <p style="margin-bottom: 12px;"><strong>3D Camera Modes:</strong>
+        <br>• Press <kbd>V</kbd> or click <strong>🎥 Camera</strong> in the header to switch between:
+        <br>&nbsp;&nbsp;1. <strong>Action RPG 3D</strong> (Top-down isometric view with zero wall clipping)
+        <br>&nbsp;&nbsp;2. <strong>3rd Person 3D</strong> (Over-the-shoulder chase camera)
+        <br>&nbsp;&nbsp;3. <strong>1st Person 3D</strong> (Classic immersive first-person perspective)
+      </p>
+      <p style="margin-bottom: 12px;"><strong>Modern Holographic Map:</strong>
+        <br>• Press <kbd>M</kbd> or click <strong>🗺 Map [M]</strong>: Open the <strong>Tactical Reconnaissance Scanner</strong> with full subterranean topography, zoom/pan controls, exploration progress, and live telemetry!
+        <br>• <strong>In-Game Circular Radar HUD</strong>: Floating glassmorphic radar in the top-right corner with 360° radar sweep, player vision cone, compass bearing, pulsing enemy blips, and loot markers.
+        <br>• Use <kbd>+</kbd> / <kbd>−</kbd> on the radar or tactical map to adjust zoom scale.
+      </p>
+      <p><strong>Goal:</strong> Delve down through Floor 1 to Floor 4 and defeat Malakor the Arch-Lich!</p>
+    </div>
+
+    <div style="margin-top: 20px;">
+      <button class="btn-primary" onclick="document.getElementById('controlsModal').close()">RETURN TO 3D DUNGEON</button>
+    </div>
+  </dialog>
+
+  <!-- Modern Tactical Holographic Map Modal (Key [M]) -->
+  <dialog id="tacticalMapModal" class="tactical-modal">
+    <div class="tactical-modal-header">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div class="tactical-icon-pulse">🗺</div>
+        <div>
+          <h2 class="modal-title" style="margin: 0; font-size: 1.3rem;">TACTICAL RECONNAISSANCE SCANNER</h2>
+          <p class="modal-subtitle" id="tacticalModalSubtitle" style="margin: 0; font-size: 0.85rem;">Holographic Subterranean Topography & Entity Telemetry</p>
+        </div>
+      </div>
+      <button class="tactical-close-btn" onclick="document.getElementById('tacticalMapModal').close()">✕ [ESC / M]</button>
+    </div>
+
+    <!-- Live Floor Telemetry Metrics -->
+    <div class="tactical-telemetry-row">
+      <div class="tactical-metric">
+        <span class="metric-lbl">EXPLORATION</span>
+        <span class="metric-val" id="tacticalExplorationText" style="color: var(--color-cyan);">0% Mapped</span>
+      </div>
+      <div class="tactical-metric">
+        <span class="metric-lbl">ACTIVE HOSTILES</span>
+        <span class="metric-val" id="tacticalHostilesText" style="color: var(--color-red);">0 Active</span>
+      </div>
+      <div class="tactical-metric">
+        <span class="metric-lbl">TREASURES</span>
+        <span class="metric-val" id="tacticalLootText" style="color: var(--color-gold);">0 Detected</span>
+      </div>
+      <div class="tactical-metric">
+        <span class="metric-lbl">DESCENT GATEWAY</span>
+        <span class="metric-val" id="tacticalGateText" style="color: var(--color-green);">Locating...</span>
+      </div>
+    </div>
+
+    <!-- Main High-Resolution Tactical Canvas -->
+    <div class="tactical-canvas-wrapper">
+      <canvas id="tacticalMapCanvas" width="820" height="480"></canvas>
+      <div class="tactical-grid-overlay"></div>
+    </div>
+
+    <!-- Modern Interactive Legend & Controls -->
+    <div class="tactical-footer-row">
+      <div class="tactical-legend-items">
+        <span class="legend-chip"><span class="chip-dot hero"></span> Adventurer</span>
+        <span class="legend-chip"><span class="chip-dot foe"></span> Hostiles</span>
+        <span class="legend-chip"><span class="chip-dot boss"></span> Boss / Elite</span>
+        <span class="legend-chip"><span class="chip-dot loot"></span> Relics & Gold</span>
+        <span class="legend-chip"><span class="chip-dot gate"></span> Descent Stairs</span>
+        <span class="legend-chip"><span class="chip-dot door"></span> Archways</span>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button id="btnTacticalMode" class="icon-btn" onclick="window.modernMap?.toggleTacticalMode()">🌡 Mode: Holographic Grid</button>
+        <button class="icon-btn" onclick="window.modernMap?.resetTacticalZoom()" title="Reset Zoom Scale">↺ Reset</button>
+        <button class="icon-btn" onclick="window.modernMap?.zoomTactical(-0.2)">🔍 -</button>
+        <button class="icon-btn" onclick="window.modernMap?.zoomTactical(0.2)">🔍 +</button>
+        <button class="btn-primary" style="padding: 6px 18px;" onclick="document.getElementById('tacticalMapModal').close()">RESUME DELVE [M]</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 3D Three.js & Client Engine Scripts -->
+  <script src="js/three.min.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/sprites.js"></script>
+  <script src="js/textures3d.js"></script>
+  <script src="js/dungeon.js"></script>
+  <script src="js/engine3d.js"></script>
+  <script src="js/modern_map.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/aibot.js"></script>
+
+  <script>
+    document.getElementById('btnControlMode').addEventListener('click', () => {
+      if (window.gameEngine) {
+        window.gameEngine.toggleControlMode();
+      }
+    });
+
+    document.getElementById('btnAiBotToggle').addEventListener('click', () => {
+      if (window.aiBot) {
+        window.aiBot.toggleAutoPilot();
+      }
+    });
+
+    document.getElementById('btnAiDiagnostics').addEventListener('click', async () => {
+      if (window.aiBot) {
+        window.gameEngine?.addLog("🤖 [AI Bot]: Executing 10-Point System Diagnostics...", "cyan");
+        await window.aiBot.runDiagnostics();
+      }
+    });
+    function selectClass(c) {
+      if (window.gameEngine) {
+        window.gameEngine.selectClass(c);
+      }
+    }
+
+    function restartGame() {
+      const go = document.getElementById('gameOverModal');
+      if (go) go.close();
+      const vic = document.getElementById('victoryModal');
+      if (vic) vic.close();
+      const title = document.getElementById('titleModal');
+      if (title) title.showModal();
+    }
+
+    const speeds = [
+      { name: 'Agile', speed: 4.8 },
+      { name: 'Sprint', speed: 6.2 },
+      { name: 'Tactical', speed: 3.6 }
+    ];
+    let speedIndex = 0;
+
+    document.getElementById('btnSpeedToggle').addEventListener('click', () => {
+      speedIndex = (speedIndex + 1) % speeds.length;
+      const s = speeds[speedIndex];
+      if (window.gameEngine && window.gameEngine.player) {
+        window.gameEngine.player.speed = s.speed;
+      }
+      document.getElementById('btnSpeedToggle').textContent = `🏃 Move: ${s.name}`;
+      window.gameEngine?.addLog(`Movement speed set to: ${s.name} (${s.speed} u/s)`, 'cyan');
+    });
+
+    document.getElementById('btnCameraToggle').addEventListener('click', () => {
+      if (window.engine3D) {
+        const mode = window.engine3D.cycleCameraMode();
+        const text = mode === 'ACTION_RPG' ? '🎥 Action RPG 3D' : (mode === 'OVER_SHOULDER' ? '🎥 3rd Person 3D' : '🎥 1st Person 3D');
+        document.getElementById('btnCameraToggle').textContent = text;
+        window.gameEngine?.addLog(`Camera switched to ${mode.replace('_', ' ')} view.`, 'cyan');
+      }
+    });
+
+    document.getElementById('btnAudioToggle').addEventListener('click', () => {
+      if (window.gameAudio) {
+        const sfx = window.gameAudio.toggleSFX();
+        const bgm = window.gameAudio.toggleBGM();
+        document.getElementById('btnAudioToggle').textContent = (sfx || bgm) ? '🔊 Audio' : '🔇 Muted';
+      }
+    });
+
+    document.getElementById('btnLeaderboard').addEventListener('click', async () => {
+      const modal = document.getElementById('leaderboardModal');
+      const tbody = document.getElementById('leaderboardBody');
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">Fetching from Python backend...</td></tr>';
+      modal.showModal();
+
+      try {
+        const res = await fetch('/api/scores');
+        if (res.ok) {
+          const scores = await res.json();
+          tbody.innerHTML = scores.map((s, idx) => `
+            <tr>
+              <td style="color: var(--color-gold); font-weight: bold;">#${idx + 1}</td>
+              <td>${s.name}</td>
+              <td><span style="color: var(--color-cyan);">${s.hero_class}</span></td>
+              <td>Floor ${s.floor}</td>
+              <td style="color: var(--color-gold); font-weight: bold;">${s.score.toLocaleString()}</td>
+            </tr>
+          `).join('');
+        }
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" style="color: red; text-align:center;">Could not load leaderboard.</td></tr>';
+      }
+    });
+
+    document.getElementById('btnControls').addEventListener('click', () => {
+      document.getElementById('controlsModal').showModal();
+    });
+  </script>
+
+</body>
+</html>
