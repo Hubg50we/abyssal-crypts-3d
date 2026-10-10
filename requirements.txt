@@ -1,0 +1,3 @@
+# Retro Dungeon Crawler (Python Roguelike)
+# Pure standard library implementation.
+# Runs directly on Python 3.10+ with zero external package dependencies!

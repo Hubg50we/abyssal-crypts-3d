@@ -1,0 +1,200 @@
+[
+  {
+    "name": "Warrior",
+    "hero_class": "Warrior",
+    "floor": 4,
+    "gold": 1958,
+    "kills": 81,
+    "score": 30228,
+    "date": "2026-10-10 18:47"
+  },
+  {
+    "name": "Warrior",
+    "hero_class": "Warrior",
+    "floor": 2,
+    "gold": 50,
+    "kills": 22,
+    "score": 11775,
+    "date": "2026-10-10 20:02"
+  },
+  {
+    "name": "Rogue",
+    "hero_class": "Rogue",
+    "floor": 1,
+    "gold": 50,
+    "kills": 20,
+    "score": 9000,
+    "date": "2026-10-10 19:22"
+  },
+  {
+    "name": "Valerius the Bold",
+    "hero_class": "Warrior",
+    "floor": 4,
+    "gold": 840,
+    "kills": 38,
+    "score": 4920,
+    "date": "Ancient Record"
+  },
+  {
+    "name": "AIBot_Hero",
+    "hero_class": "Warrior",
+    "floor": 4,
+    "gold": 580,
+    "kills": 32,
+    "score": 4120,
+    "date": "2026-10-10 19:22"
+  },
+  {
+    "name": "AIBot_Hero",
+    "hero_class": "Warrior",
+    "floor": 4,
+    "gold": 580,
+    "kills": 32,
+    "score": 4120,
+    "date": "2026-10-10 19:41"
+  },
+  {
+    "name": "AIBot_Hero",
+    "hero_class": "Warrior",
+    "floor": 4,
+    "gold": 580,
+    "kills": 32,
+    "score": 4120,
+    "date": "2026-10-10 19:42"
+  },
+  {
+    "name": "AIBot_Hero",
+    "hero_class": "Warrior",
+    "floor": 4,
+    "gold": 580,
+    "kills": 32,
+    "score": 4120,
+    "date": "2026-10-10 19:52"
+  },
+  {
+    "name": "AIBot_Hero",
+    "hero_class": "Warrior",
+    "floor": 4,
+    "gold": 580,
+    "kills": 32,
+    "score": 4120,
+    "date": "2026-10-10 19:53"
+  },
+  {
+    "name": "AIBot_Hero",
+    "hero_class": "Warrior",
+    "floor": 4,
+    "gold": 580,
+    "kills": 32,
+    "score": 4120,
+    "date": "2026-10-10 20:00"
+  },
+  {
+    "name": "AIBot_Hero",
+    "hero_class": "Warrior",
+    "floor": 4,
+    "gold": 580,
+    "kills": 32,
+    "score": 4120,
+    "date": "2026-10-10 20:01"
+  },
+  {
+    "name": "AIBot_Hero",
+    "hero_class": "Warrior",
+    "floor": 4,
+    "gold": 580,
+    "kills": 32,
+    "score": 4120,
+    "date": "2026-10-10 20:18"
+  },
+  {
+    "name": "AIBot_Hero",
+    "hero_class": "Warrior",
+    "floor": 4,
+    "gold": 580,
+    "kills": 32,
+    "score": 4120,
+    "date": "2026-10-10 20:25"
+  },
+  {
+    "name": "AIBot_Hero",
+    "hero_class": "Warrior",
+    "floor": 4,
+    "gold": 580,
+    "kills": 32,
+    "score": 4120,
+    "date": "2026-10-10 20:25"
+  },
+  {
+    "name": "AIBot_Hero",
+    "hero_class": "Warrior",
+    "floor": 4,
+    "gold": 580,
+    "kills": 32,
+    "score": 4120,
+    "date": "2026-10-10 20:39"
+  },
+  {
+    "name": "Elysia Shadowstep",
+    "hero_class": "Rogue",
+    "floor": 3,
+    "gold": 620,
+    "kills": 29,
+    "score": 3480,
+    "date": "Ancient Record"
+  },
+  {
+    "name": "Archmage Vaelin",
+    "hero_class": "Mage",
+    "floor": 3,
+    "gold": 510,
+    "kills": 24,
+    "score": 2890,
+    "date": "Ancient Record"
+  },
+  {
+    "name": "Warrior",
+    "hero_class": "Warrior",
+    "floor": 2,
+    "gold": 50,
+    "kills": 5,
+    "score": 2325,
+    "date": "2026-10-10 19:22"
+  },
+  {
+    "name": "AIBot_Tester",
+    "hero_class": "Warrior",
+    "floor": 2,
+    "gold": 250,
+    "kills": 14,
+    "score": 1850,
+    "date": "2026-10-10 19:19"
+  },
+  {
+    "name": "AIBot_Tester",
+    "hero_class": "Warrior",
+    "floor": 2,
+    "gold": 250,
+    "kills": 14,
+    "score": 1850,
+    "date": "2026-10-10 19:20"
+  },
+  {
+    "name": "Krag Ironbreaker",
+    "hero_class": "Warrior",
+    "floor": 2,
+    "gold": 310,
+    "kills": 16,
+    "score": 1720,
+    "date": "Ancient Record"
+  },
+  {
+    "name": "Lyra Whisperwind",
+    "hero_class": "Rogue",
+    "floor": 2,
+    "gold": 220,
+    "kills": 11,
+    "score": 1180,
+    "date": "Ancient Record"
+  }
+]

@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: retro-dungeon-crawler-3d
+    env: python
+    buildCommand: ""
+    startCommand: "python server.py"
+    plan: free
