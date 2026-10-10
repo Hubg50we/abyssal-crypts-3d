@@ -1218,13 +1218,14 @@ class GameEngine {
       // V -> Cycle 3D Camera
       if (e.key === 'v' || e.key === 'V') {
         e.preventDefault();
-        if (window.engine3D) {
+        if (typeof window.toggleCameraMode === 'function') {
+          window.toggleCameraMode();
+        } else if (window.engine3D) {
           const mode = window.engine3D.cycleCameraMode();
+          const modeName = mode === 'ACTION_RPG' ? 'Action RPG' : (mode === 'OVER_SHOULDER' ? '3rd Person' : '1st Person');
           const btn = document.getElementById('btnCameraToggle');
-          if (btn) {
-            btn.textContent = mode === 'ACTION_RPG' ? '🎥 Action RPG 3D' : (mode === 'OVER_SHOULDER' ? '🎥 3rd Person 3D' : '🎥 1st Person 3D');
-          }
-          this.addLog(`Switched camera to ${mode.replace('_', ' ')} view.`, 'cyan');
+          if (btn) btn.textContent = `🎥 Camera: ${modeName} [V]`;
+          this.addLog(`Switched camera to ${modeName} 3D view.`, 'cyan');
         }
         return;
       }

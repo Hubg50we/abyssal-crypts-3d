@@ -590,6 +590,70 @@ dialog::backdrop {
 }
 
 /* ==========================================================================
+   FLOATING HUD CAMERA TOGGLE & PERSPECTIVE SELECTOR
+   ========================================================================== */
+
+.hud-camera-pill {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(14, 18, 28, 0.88);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 184, 48, 0.45);
+  border-radius: 30px;
+  color: var(--color-gold);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 14px rgba(255, 184, 48, 0.2);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: auto;
+  user-select: none;
+}
+
+.hud-camera-pill:hover {
+  background: rgba(26, 32, 50, 0.95);
+  border-color: var(--color-gold);
+  color: #fff;
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7), 0 0 22px rgba(255, 184, 48, 0.45);
+}
+
+.hud-camera-pill:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.hud-camera-pill .camera-icon {
+  font-size: 1.15rem;
+  animation: pulse-camera 2s infinite ease-in-out;
+}
+
+@keyframes pulse-camera {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.camera-hotkey-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 184, 48, 0.2);
+  color: var(--color-gold);
+  border: 1px solid rgba(255, 184, 48, 0.5);
+  border-radius: 6px;
+  font-family: var(--font-retro);
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  margin-left: 4px;
+}
+
+/* ==========================================================================
    2026 MODERN UI MAP & TACTICAL HOLOGRAPHIC RADAR
    ========================================================================== */
 

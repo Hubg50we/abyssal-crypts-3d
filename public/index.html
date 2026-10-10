@@ -21,7 +21,7 @@
     </div>
 
     <div class="header-controls">
-      <button class="icon-btn" id="btnCameraToggle" title="Cycle Camera Mode: Action RPG / 3rd Person / 1st Person [V]">🎥 Action RPG 3D</button>
+      <button class="icon-btn" id="btnCameraToggle" title="Click or Press V to Cycle Camera Mode (Action RPG / 3rd Person / 1st Person)" onclick="window.toggleCameraMode()">🎥 Camera: Action RPG [V]</button>
       <button class="icon-btn" id="btnTacticalMap" title="Open Holographic Tactical Map [M]" onclick="window.modernMap?.toggleTacticalModal()">🗺 Map [M]</button>
       <button class="icon-btn" id="btnControlMode" title="Toggle A/D Controls: Strafe vs Turn [T]">🕹 A/D: Strafe</button>
       <button class="icon-btn" id="btnAiBotToggle" title="Toggle AI Bot Autonomous Playtester" style="color: var(--color-gold); border-color: rgba(255,184,48,0.4);">🤖 AI Bot: Auto Play</button>
@@ -40,6 +40,13 @@
     <section class="canvas-wrapper" id="canvasContainer">
       <canvas id="gameCanvas"></canvas>
 
+      <!-- Floating In-Game Camera Toggle Button (Top-Left of 3D Canvas) -->
+      <div class="hud-camera-pill" id="hudCameraPill" onclick="window.toggleCameraMode()" title="Click to Cycle Camera View: Action RPG -> 3rd Person -> 1st Person (or press V)">
+        <span class="camera-icon">🎥</span>
+        <span id="hudCameraText">Camera: Action RPG 3D</span>
+        <span class="camera-hotkey-badge">V</span>
+      </div>
+
       <!-- 2026 Modern In-Game Floating HUD Holographic Radar (Top-Right) -->
       <div class="hud-radar-container" id="hudRadarContainer">
         <div class="radar-card">
@@ -56,6 +63,7 @@
 
           <!-- Quick Micro Controls -->
           <div class="radar-quick-controls">
+            <button class="radar-btn" id="btnRadarCamera" title="Switch 3D Camera Mode [V]" onclick="window.toggleCameraMode()">🎥</button>
             <button class="radar-btn" id="btnRadarZoomIn" title="Zoom In [+]" onclick="window.modernMap?.zoomRadar(0.3)">+</button>
             <button class="radar-btn" id="btnRadarZoomOut" title="Zoom Out [-]" onclick="window.modernMap?.zoomRadar(-0.3)">−</button>
             <button class="radar-btn" id="btnRadarExpand" title="Expand Full Tactical Map [M]" onclick="window.modernMap?.toggleTacticalModal()">🗺</button>
@@ -498,14 +506,24 @@
       window.gameEngine?.addLog(`Movement speed set to: ${s.name} (${s.speed} u/s)`, 'cyan');
     });
 
-    document.getElementById('btnCameraToggle').addEventListener('click', () => {
+    window.toggleCameraMode = function() {
       if (window.engine3D) {
         const mode = window.engine3D.cycleCameraMode();
-        const text = mode === 'ACTION_RPG' ? '🎥 Action RPG 3D' : (mode === 'OVER_SHOULDER' ? '🎥 3rd Person 3D' : '🎥 1st Person 3D');
-        document.getElementById('btnCameraToggle').textContent = text;
-        window.gameEngine?.addLog(`Camera switched to ${mode.replace('_', ' ')} view.`, 'cyan');
+        const modeName = mode === 'ACTION_RPG' ? 'Action RPG' : (mode === 'OVER_SHOULDER' ? '3rd Person' : '1st Person');
+        
+        const topBtn = document.getElementById('btnCameraToggle');
+        if (topBtn) topBtn.textContent = `🎥 Camera: ${modeName} [V]`;
+
+        const pillText = document.getElementById('hudCameraText');
+        if (pillText) pillText.textContent = `Camera: ${modeName} 3D`;
+
+        const radarBtn = document.getElementById('btnRadarCamera');
+        if (radarBtn) radarBtn.title = `Camera: ${modeName} (Click or press V to switch)`;
+
+        window.gameEngine?.addLog(`🎥 Camera Mode switched to ${modeName} 3D.`, 'cyan');
+        return mode;
       }
-    });
+    };
 
     document.getElementById('btnAudioToggle').addEventListener('click', () => {
       if (window.gameAudio) {
