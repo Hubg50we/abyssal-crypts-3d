@@ -41,6 +41,11 @@ class SpriteGenerator {
     this.cache['m_orc'] = this.renderOrc();
     this.cache['m_necromancer'] = this.renderNecromancer();
     this.cache['m_boss'] = this.renderBoss();
+    this.cache['m_void_drake'] = this.renderVoidDrake();
+    this.cache['m_chaos_elemental'] = this.renderChaosElemental();
+    this.cache['m_frost_revenant'] = this.renderFrostRevenant();
+    this.cache['m_blood_fiend'] = this.renderBloodFiend();
+    this.cache['m_behemoth'] = this.renderBehemoth();
 
     // Interactive & Items
     this.cache['chest_closed'] = this.renderChest(false);
@@ -508,6 +513,180 @@ class SpriteGenerator {
     ctx.fillRect(25, 4, 3, 22);
     ctx.fillStyle = '#ff3838';
     ctx.fillRect(26, 6, 1, 18);
+    return canvas;
+  }
+
+  renderVoidDrake() {
+    const { canvas, ctx } = this.createCanvas();
+    // Void Dragon with wings & amethyst horns
+    ctx.fillStyle = 'rgba(142, 68, 173, 0.45)';
+    ctx.fillRect(2, 6, 28, 16); // Void mist aura
+
+    // Wings
+    ctx.fillStyle = '#4a235a';
+    ctx.fillRect(3, 4, 8, 12);
+    ctx.fillRect(21, 4, 8, 12);
+    ctx.fillStyle = '#8e44ad';
+    ctx.fillRect(4, 5, 6, 9);
+    ctx.fillRect(22, 5, 6, 9);
+
+    // Drake Dragon Head & Neck
+    ctx.fillStyle = '#6c3483';
+    ctx.fillRect(10, 8, 12, 14);
+    ctx.fillRect(11, 4, 10, 7);
+
+    // Amethyst Horns
+    ctx.fillStyle = '#bb86fc';
+    ctx.fillRect(9, 1, 3, 5);
+    ctx.fillRect(20, 1, 3, 5);
+
+    // Void Breath Core & Glowing Eyes
+    ctx.fillStyle = '#00f5d4';
+    ctx.fillRect(12, 6, 2, 2);
+    ctx.fillRect(18, 6, 2, 2);
+    ctx.fillRect(14, 10, 4, 4);
+
+    // Claws & Tail
+    ctx.fillStyle = '#2c003e';
+    ctx.fillRect(9, 22, 4, 6);
+    ctx.fillRect(19, 22, 4, 6);
+    ctx.fillRect(15, 22, 2, 8);
+    return canvas;
+  }
+
+  renderChaosElemental() {
+    const { canvas, ctx } = this.createCanvas();
+    // Swirling plasma energy elemental
+    ctx.fillStyle = 'rgba(231, 76, 60, 0.35)';
+    ctx.fillRect(4, 4, 24, 24);
+
+    // Outer plasma arcs
+    ctx.fillStyle = '#e74c3c';
+    ctx.fillRect(6, 6, 20, 20);
+    ctx.fillStyle = '#ff793f';
+    ctx.fillRect(8, 8, 16, 16);
+
+    // Core Solar Fusion
+    ctx.fillStyle = '#fffa65';
+    ctx.fillRect(10, 10, 12, 12);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(12, 12, 8, 8);
+
+    // Electric Cyan Energy Sparks
+    ctx.fillStyle = '#00f5d4';
+    ctx.fillRect(4, 12, 3, 3);
+    ctx.fillRect(25, 14, 3, 3);
+    ctx.fillRect(14, 4, 3, 3);
+    ctx.fillRect(15, 25, 3, 3);
+    return canvas;
+  }
+
+  renderFrostRevenant() {
+    const { canvas, ctx } = this.createCanvas();
+    // Glacial armored dread knight
+    ctx.fillStyle = 'rgba(0, 206, 201, 0.35)';
+    ctx.fillRect(4, 4, 24, 24);
+
+    // Glacial Plate Armor
+    ctx.fillStyle = '#2d3436';
+    ctx.fillRect(8, 6, 16, 20);
+    ctx.fillStyle = '#0984e3';
+    ctx.fillRect(9, 7, 14, 18);
+
+    // Frost Horned Greathelm
+    ctx.fillStyle = '#74b9ff';
+    ctx.fillRect(10, 3, 12, 8);
+    ctx.fillStyle = '#dfe6e9';
+    ctx.fillRect(7, 1, 3, 6);
+    ctx.fillRect(22, 1, 3, 6);
+
+    // Cold Piercing Blue Visor
+    ctx.fillStyle = '#00cec9';
+    ctx.fillRect(12, 6, 8, 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(14, 6, 4, 2);
+
+    // Ice Crystal Greatsword
+    ctx.fillStyle = '#81ecec';
+    ctx.fillRect(24, 2, 4, 24);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(25, 4, 2, 20);
+    return canvas;
+  }
+
+  renderBloodFiend() {
+    const { canvas, ctx } = this.createCanvas();
+    // Crimson gargoyle fiend
+    ctx.fillStyle = 'rgba(192, 57, 43, 0.4)';
+    ctx.fillRect(3, 4, 26, 24);
+
+    // Leathery wings
+    ctx.fillStyle = '#78281f';
+    ctx.fillRect(2, 6, 8, 14);
+    ctx.fillRect(22, 6, 8, 14);
+
+    // Muscular demonic torso
+    ctx.fillStyle = '#c0392b';
+    ctx.fillRect(9, 8, 14, 16);
+    ctx.fillStyle = '#e74c3c';
+    ctx.fillRect(11, 10, 10, 12);
+
+    // Gargoyle Horns & Head
+    ctx.fillStyle = '#922b21';
+    ctx.fillRect(10, 4, 12, 8);
+    ctx.fillStyle = '#f5b7b1';
+    ctx.fillRect(8, 2, 3, 5);
+    ctx.fillRect(21, 2, 3, 5);
+
+    // Burning ruby eyes & fangs
+    ctx.fillStyle = '#ff7979';
+    ctx.fillRect(12, 7, 2, 2);
+    ctx.fillRect(18, 7, 2, 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(13, 10, 2, 2);
+    ctx.fillRect(17, 10, 2, 2);
+
+    // Sharp talons
+    ctx.fillStyle = '#17202a';
+    ctx.fillRect(8, 24, 4, 4);
+    ctx.fillRect(20, 24, 4, 4);
+    return canvas;
+  }
+
+  renderBehemoth() {
+    const { canvas, ctx } = this.createCanvas();
+    // Colossal demonic titan juggernaut
+    ctx.fillStyle = '#1c2833';
+    ctx.fillRect(4, 4, 24, 24); // Massive broad frame
+
+    // Obsidian Carapace Armor
+    ctx.fillStyle = '#2c3e50';
+    ctx.fillRect(6, 6, 20, 22);
+
+    // Magma Cracks Across Body
+    ctx.fillStyle = '#e67e22';
+    ctx.fillRect(9, 10, 3, 10);
+    ctx.fillRect(18, 12, 4, 8);
+    ctx.fillRect(12, 16, 8, 2);
+    ctx.fillStyle = '#f39c12';
+    ctx.fillRect(10, 11, 1, 8);
+    ctx.fillRect(19, 13, 2, 6);
+
+    // Giant Iron-Clad Horns
+    ctx.fillStyle = '#7f8c8d';
+    ctx.fillRect(4, 1, 5, 8);
+    ctx.fillRect(23, 1, 5, 8);
+    ctx.fillStyle = '#bdc3c7';
+    ctx.fillRect(5, 2, 3, 6);
+    ctx.fillRect(24, 2, 3, 6);
+
+    // Burning Molten Eyes
+    ctx.fillStyle = '#e74c3c';
+    ctx.fillRect(11, 7, 3, 3);
+    ctx.fillRect(18, 7, 3, 3);
+    ctx.fillStyle = '#f1c40f';
+    ctx.fillRect(12, 8, 1, 1);
+    ctx.fillRect(19, 8, 1, 1);
     return canvas;
   }
 

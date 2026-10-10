@@ -11,27 +11,41 @@
   <!-- Top Navigation & Global HUD -->
   <header class="game-header">
     <div class="brand-section">
-      <h1 class="game-title">⚔ THE ABYSSAL CRYPTS 3D</h1>
+      <div class="brand-crest">⚔️</div>
+      <div class="brand-titles">
+        <h1 class="game-title">THE ABYSSAL CRYPTS 3D</h1>
+        <div class="brand-subtitle">
+          <span class="live-pill">● 2026 ACTION RPG</span>
+        </div>
+      </div>
     </div>
 
     <div class="hud-stats-row">
       <div class="hud-item floor" id="hudFloor">3D Floor 1 : The Crypts</div>
       <div class="hud-item gold" id="hudGold">0 G</div>
-      <div class="hud-item" id="hudScore">Score: 0</div>
+      <div class="hud-item score" id="hudScore">Score: 0</div>
     </div>
 
     <div class="header-controls">
-      <button class="icon-btn" id="btnCameraToggle" title="Click or Press V to Cycle Camera Mode (Action RPG / 3rd Person / 1st Person)" onclick="window.toggleCameraMode()">🎥 Camera: Action RPG [V]</button>
-      <button class="icon-btn" id="btnMouseLookToggle" title="Toggle Mouse Camera Control (Mouse Look / Orbit / Aim [U])" onclick="window.engine3D?.toggleMouseLook()">🖱️ Mouse Look: OFF [U]</button>
-      <button class="icon-btn" id="btnTacticalMap" title="Open Holographic Tactical Map [M]" onclick="window.modernMap?.toggleTacticalModal()">🗺 Map [M]</button>
-      <button class="icon-btn" id="btnControlMode" title="Toggle A/D Controls: Strafe vs Turn [T]">🕹 A/D: Strafe</button>
-      <button class="icon-btn" id="btnAiBotToggle" title="Toggle AI Bot Autonomous Playtester" style="color: var(--color-gold); border-color: rgba(255,184,48,0.4);">🤖 AI Bot: Auto Play</button>
-      <button class="icon-btn" id="btnAiDiagnostics" title="Run Automated AI Diagnostics Test Suite">🧪 Run Tests</button>
-      <button class="icon-btn" id="btnSpeedToggle" title="Adjust Walking Pacing">🏃 Move: Agile</button>
-      <button class="icon-btn" id="btnMusicToggle" title="Toggle Atmospheric Dungeon Synth Music [BGM]">🎵 Music: ON</button>
-      <button class="icon-btn" id="btnAudioToggle" title="Toggle Sound Effects [SFX]">🔊 SFX: ON</button>
-      <button class="icon-btn" id="btnLeaderboard" title="View High Scores">🏆 Hall of Fame</button>
-      <button class="icon-btn" id="btnControls" title="How to Play">❓ Controls</button>
+      <div class="btn-group view-group">
+        <button class="icon-btn" id="btnCameraToggle" title="Click or Press V to Cycle Camera Mode" onclick="window.toggleCameraMode()">🎥 Cam [V]</button>
+        <button class="icon-btn" id="btnMouseLookToggle" title="Lock Mouse to Aim & Look [U]" onclick="window.engine3D?.toggleMouseLook()">🖱️ Aim [U]</button>
+        <button class="icon-btn" id="btnTacticalMap" title="Open Holographic Tactical Map [M]" onclick="window.modernMap?.toggleTacticalModal()">🗺️ Map [M]</button>
+        <button class="icon-btn" id="btnControlMode" title="Toggle A/D Controls: Strafe vs Turn [T]">🕹️ Strafe</button>
+      </div>
+
+      <div class="btn-group audio-group">
+        <button class="icon-btn" id="btnMusicToggle" title="Toggle Atmospheric Synth Soundtrack">🎵 Music</button>
+        <button class="icon-btn" id="btnAudioToggle" title="Toggle Sound FX">🔊 SFX</button>
+      </div>
+
+      <div class="btn-group tool-group">
+        <button class="icon-btn bot-btn" id="btnAiBotToggle" title="Toggle Autonomous AI Bot Tester">🤖 AI Bot</button>
+        <button class="icon-btn test-btn" id="btnAiDiagnostics" title="Run Comprehensive Diagnostics">🧪 Tests</button>
+        <button class="icon-btn" id="btnSpeedToggle" title="Adjust Pacing">🏃 Move</button>
+        <button class="icon-btn" id="btnLeaderboard" title="View High Scores">🏆 Hall</button>
+        <button class="icon-btn" id="btnControls" title="How to Play">❓ Help</button>
+      </div>
     </div>
   </header>
 
@@ -103,34 +117,127 @@
         </div>
       </div>
 
+      <!-- ======================================================================
+           2026 SLEEK IN-GAME FLOATING ACTION DOCK (Action RPG Hotbar)
+           ====================================================================== -->
+      <div class="hud-action-dock" id="hudActionDock">
+        <!-- XP Progression Bar Rail atop the Action Dock -->
+        <div class="dock-xp-rail" title="Experience Progress">
+          <div class="dock-xp-fill" id="dockXpFill" style="width: 0%;"></div>
+          <span class="dock-xp-badge" id="dockXpBadge">LV.1 • 0%</span>
+        </div>
+
+        <div class="dock-core-layout">
+          <!-- Left: Vitality Health Globe / Curved Meter -->
+          <div class="dock-vitality-meter hp-meter" id="dockHpMeter" title="Health Points [HP]">
+            <div class="dock-meter-ring hp-ring">
+              <svg class="dock-ring-svg" viewBox="0 0 76 76">
+                <circle class="ring-bg" cx="38" cy="38" r="32" />
+                <circle class="ring-fill hp-fill-circle" id="dockHpCircle" cx="38" cy="38" r="32" />
+              </svg>
+              <div class="dock-meter-core hp-core">
+                <span class="dock-core-icon">❤️</span>
+                <span class="dock-core-val" id="dockHpVal">120</span>
+                <span class="dock-core-lbl">HP</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Center: Dynamic Action Hotbar -->
+          <div class="dock-hotbar">
+            <!-- Weapon Strike Slot (Space / Left-Click) -->
+            <div class="dock-slot primary-slot" id="dockAttackSlot" onclick="window.gameEngine?.triggerPlayerAttack()" title="Weapon Strike [SPACE / Left-Click]">
+              <div class="dock-slot-key">SPC</div>
+              <div class="dock-slot-icon">⚔️</div>
+              <div class="dock-slot-name" id="dockAttackName">Strike</div>
+            </div>
+
+            <!-- Skill 1 [Q] -->
+            <div class="dock-slot skill-slot" id="dockSkillQ" onclick="window.gameEngine?.useAbility(window.gameEngine?.player?.abilities?.[0]?.id)" title="Skill 1 [Q]">
+              <div class="dock-slot-key">Q</div>
+              <div class="dock-slot-icon" id="dockSkillQIcon">⚡</div>
+              <div class="dock-slot-name" id="dockSkillQName">Skill 1</div>
+              <div class="dock-mana-cost" id="dockSkillQCost">15 MP</div>
+            </div>
+
+            <!-- Skill 2 [E] -->
+            <div class="dock-slot skill-slot" id="dockSkillE" onclick="window.gameEngine?.useAbility(window.gameEngine?.player?.abilities?.[1]?.id)" title="Skill 2 [E]">
+              <div class="dock-slot-key">E</div>
+              <div class="dock-slot-icon" id="dockSkillEIcon">🔥</div>
+              <div class="dock-slot-name" id="dockSkillEName">Skill 2</div>
+              <div class="dock-mana-cost" id="dockSkillECost">20 MP</div>
+            </div>
+
+            <!-- Skill 3 Ultimate [R] -->
+            <div class="dock-slot skill-slot ult-slot" id="dockSkillR" onclick="window.gameEngine?.useAbility(window.gameEngine?.player?.abilities?.[2]?.id)" title="Ultimate Ability [R]">
+              <div class="dock-slot-key">R</div>
+              <div class="dock-slot-icon" id="dockSkillRIcon">👑</div>
+              <div class="dock-slot-name" id="dockSkillRName">Ultimate</div>
+              <div class="dock-mana-cost" id="dockSkillRCost">25 MP</div>
+            </div>
+
+            <div class="dock-divider"></div>
+
+            <!-- Quick Potion Belt Slots [1, 2, 3] -->
+            <div class="dock-slot potion-slot" id="dockPot1" onclick="window.gameEngine?.useItem(0)" title="Quick Item 1 [Key: 1]">
+              <div class="dock-slot-key">1</div>
+              <div class="dock-slot-icon" id="dockPot1Icon">🧪</div>
+              <div class="dock-slot-qty" id="dockPot1Qty">1</div>
+            </div>
+            <div class="dock-slot potion-slot" id="dockPot2" onclick="window.gameEngine?.useItem(1)" title="Quick Item 2 [Key: 2]">
+              <div class="dock-slot-key">2</div>
+              <div class="dock-slot-icon" id="dockPot2Icon">💧</div>
+              <div class="dock-slot-qty" id="dockPot2Qty">2</div>
+            </div>
+            <div class="dock-slot potion-slot" id="dockPot3" onclick="window.gameEngine?.useItem(2)" title="Quick Item 3 [Key: 3]">
+              <div class="dock-slot-key">3</div>
+              <div class="dock-slot-icon" id="dockPot3Icon">📜</div>
+              <div class="dock-slot-qty" id="dockPot3Qty">3</div>
+            </div>
+          </div>
+
+          <!-- Right: Arcana Mana Globe / Curved Meter -->
+          <div class="dock-vitality-meter mana-meter" id="dockManaMeter" title="Mana & Arcana Energy [MP]">
+            <div class="dock-meter-ring mana-ring">
+              <svg class="dock-ring-svg" viewBox="0 0 76 76">
+                <circle class="ring-bg" cx="38" cy="38" r="32" />
+                <circle class="ring-fill mana-fill-circle" id="dockManaCircle" cx="38" cy="38" r="32" />
+              </svg>
+              <div class="dock-meter-core mana-core">
+                <span class="dock-core-icon">🔷</span>
+                <span class="dock-core-val" id="dockManaVal">60</span>
+                <span class="dock-core-lbl">MP</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="canvas-overlay-hints">
         <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move</span>
-        <span><kbd>Left-Click</kbd> Attack</span>
-        <span><kbd>Right-Drag</kbd> Orbit Cam</span>
+        <span><kbd>SPC</kbd> / <kbd>Click</kbd> Attack</span>
+        <span><kbd>Q</kbd><kbd>E</kbd><kbd>R</kbd> Skills</span>
+        <span><kbd>1-3</kbd> Potions</span>
+        <span><kbd>Right-Drag</kbd> Orbit</span>
         <span><kbd>Scroll</kbd> Zoom</span>
-        <span><kbd>U</kbd> Mouse Look</span>
-        <span><kbd>V</kbd> Camera Mode</span>
+        <span><kbd>U</kbd> Aim</span>
+        <span><kbd>V</kbd> Camera</span>
         <span><kbd>M</kbd> Map</span>
       </div>
 
-      <!-- On-Screen Virtual Action D-Pad -->
-      <div style="position: absolute; bottom: 14px; right: 14px; display: grid; grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(3, 44px); gap: 4px; z-index: 5;">
+      <!-- Modern On-Screen Touch Virtual D-Pad -->
+      <div class="virtual-dpad" id="virtualDpad">
         <div></div>
-        <button class="icon-btn" style="padding: 0; justify-content: center; font-size: 1.1rem;" 
-          onmousedown="window.gameEngine?.keysDown.add('w')" onmouseup="window.gameEngine?.keysDown.delete('w')"
+        <button class="dpad-btn" onmousedown="window.gameEngine?.keysDown.add('w')" onmouseup="window.gameEngine?.keysDown.delete('w')"
           ontouchstart="window.gameEngine?.keysDown.add('w')" ontouchend="window.gameEngine?.keysDown.delete('w')" title="Move Up [W]">▲</button>
         <div></div>
-        <button class="icon-btn" style="padding: 0; justify-content: center; font-size: 1.1rem;" 
-          onmousedown="window.gameEngine?.keysDown.add('a')" onmouseup="window.gameEngine?.keysDown.delete('a')"
+        <button class="dpad-btn" onmousedown="window.gameEngine?.keysDown.add('a')" onmouseup="window.gameEngine?.keysDown.delete('a')"
           ontouchstart="window.gameEngine?.keysDown.add('a')" ontouchend="window.gameEngine?.keysDown.delete('a')" title="Move Left [A]">◀</button>
-        <button class="icon-btn" style="padding: 0; justify-content: center; background: rgba(255,184,48,0.25); color: var(--color-gold); font-size: 1.2rem;" 
-          onclick="window.gameEngine?.triggerPlayerAttack()" title="Attack / Slash [Space / Click]">⚔</button>
-        <button class="icon-btn" style="padding: 0; justify-content: center; font-size: 1.1rem;" 
-          onmousedown="window.gameEngine?.keysDown.add('d')" onmouseup="window.gameEngine?.keysDown.delete('d')"
+        <button class="dpad-btn dpad-atk" onclick="window.gameEngine?.triggerPlayerAttack()" title="Attack / Slash [Space / Click]">⚔</button>
+        <button class="dpad-btn" onmousedown="window.gameEngine?.keysDown.add('d')" onmouseup="window.gameEngine?.keysDown.delete('d')"
           ontouchstart="window.gameEngine?.keysDown.add('d')" ontouchend="window.gameEngine?.keysDown.delete('d')" title="Move Right [D]">▶</button>
         <div></div>
-        <button class="icon-btn" style="padding: 0; justify-content: center; font-size: 1.1rem;" 
-          onmousedown="window.gameEngine?.keysDown.add('s')" onmouseup="window.gameEngine?.keysDown.delete('s')"
+        <button class="dpad-btn" onmousedown="window.gameEngine?.keysDown.add('s')" onmouseup="window.gameEngine?.keysDown.delete('s')"
           ontouchstart="window.gameEngine?.keysDown.add('s')" ontouchend="window.gameEngine?.keysDown.delete('s')" title="Move Down [S]">▼</button>
         <div></div>
       </div>

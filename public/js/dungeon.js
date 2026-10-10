@@ -263,7 +263,12 @@ class DungeonManager {
       { type: 'goblin_archer', name: 'Goblin Archer', hp: 18, atk: 9, def: 1, xp: 24, icon: 'archer', color: '#44bd32', ranged: true },
       { type: 'orc', name: 'Orc Berserker', hp: 38, atk: 14, def: 4, xp: 45, icon: 'orc', color: '#e1b12c' },
       { type: 'spectre', name: 'Shadow Phantom', hp: 28, atk: 12, def: 2, xp: 35, icon: 'spectre', color: '#9c88ff' },
-      { type: 'necromancer', name: 'Bone Weaver Necromancer', hp: 34, atk: 13, def: 3, xp: 55, icon: 'necro', color: '#8c7ae6', caster: true }
+      { type: 'blood_fiend', name: 'Crimson Blood Fiend', hp: 36, atk: 17, def: 3, xp: 55, icon: 'fiend', color: '#e74c3c' },
+      { type: 'necromancer', name: 'Bone Weaver Necromancer', hp: 34, atk: 13, def: 3, xp: 55, icon: 'necro', color: '#8c7ae6', caster: true },
+      { type: 'chaos_elemental', name: 'Chaos Core Elemental', hp: 44, atk: 16, def: 4, xp: 70, icon: 'elemental', color: '#ff793f', caster: true },
+      { type: 'frost_revenant', name: 'Glacial Frost Revenant', hp: 54, atk: 20, def: 6, xp: 85, icon: 'revenant', color: '#00d2d3' },
+      { type: 'void_drake', name: 'Void Nether Drake', hp: 50, atk: 19, def: 5, xp: 80, icon: 'void_drake', color: '#9b59b6', ranged: true, flying: true },
+      { type: 'behemoth', name: 'Abyssal Titan Behemoth', hp: 76, atk: 25, def: 7, xp: 125, icon: 'behemoth', color: '#e67e22', elite: true }
     ];
 
     for (const room of rooms.slice(1)) {

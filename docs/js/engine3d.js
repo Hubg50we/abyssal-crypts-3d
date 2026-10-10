@@ -64,6 +64,9 @@ class Engine3D {
     this.damagePopups = [];
     this.projectiles = [];
     this.particles3D = [];
+    this.killVFXList = [];
+    this.cameraShakeTime = 0;
+    this.cameraShakeIntensity = 0;
 
     this.torchFlickerTime = 0;
     this.lastTime = performance.now();
@@ -782,10 +785,10 @@ class Engine3D {
       this.updateMonsterHealthBar(mGroup, m);
     }
 
-    // Clean up slain monsters with death particle bursts
+    // Clean up slain monsters with death particle bursts & kill VFX
     for (const [id, mesh] of this.monsterMeshes.entries()) {
       if (!currentMonsterIds.has(id)) {
-        this.spawnParticleExplosion(mesh.position.x, mesh.position.y + 0.9, mesh.position.z, 0xe74c3c, 24);
+        this.triggerMonsterKillVFX(mesh.position.x, mesh.position.y, mesh.position.z, mesh.userData?.monster);
         this.scene.remove(mesh);
         this.monsterMeshes.delete(id);
       }
@@ -816,7 +819,7 @@ class Engine3D {
     }
   }
 
-  // Instant removal of slain monster mesh & spawn death particles
+  // Instant removal of slain monster mesh & trigger kill VFX
   removeMonsterMesh(idOrMonster) {
     let id = (typeof idOrMonster === 'object' && idOrMonster !== null) ? idOrMonster.id : idOrMonster;
     let mesh = id ? this.monsterMeshes.get(id) : null;
@@ -833,7 +836,8 @@ class Engine3D {
     }
 
     if (mesh) {
-      this.spawnParticleExplosion(mesh.position.x, mesh.position.y + 0.9, mesh.position.z, 0xe74c3c, 26);
+      const monsterData = mesh.userData?.monster || (typeof idOrMonster === 'object' ? idOrMonster : null);
+      this.triggerMonsterKillVFX(mesh.position.x, mesh.position.y, mesh.position.z, monsterData);
       this.scene.remove(mesh);
       if (id) this.monsterMeshes.delete(id);
     }
@@ -972,7 +976,13 @@ class Engine3D {
     spriteTex.magFilter = THREE.NearestFilter;
     spriteTex.minFilter = THREE.NearestFilter;
 
-    const size = m.boss ? 2.6 : 1.75;
+    // Custom scaling per tier and boss
+    let size = 1.8;
+    if (m.type === 'behemoth') size = 3.1;
+    else if (m.type === 'void_drake' || m.type === 'frost_revenant' || m.type === 'chaos_elemental') size = 2.35;
+    else if (m.type === 'blood_fiend') size = 2.05;
+    else if (m.boss) size = 2.7;
+
     const spriteMat = new THREE.MeshStandardMaterial({
       map: spriteTex,
       transparent: true,
@@ -984,6 +994,29 @@ class Engine3D {
     spritePlane.position.y = size / 2;
     spritePlane.castShadow = true;
     group.add(spritePlane);
+
+    // Dynamic Elemental Ground Aura Ring
+    let auraColor = 0xe74c3c;
+    if (m.type === 'void_drake') auraColor = 0xa855f7;
+    else if (m.type === 'frost_revenant') auraColor = 0x00d2d3;
+    else if (m.type === 'chaos_elemental') auraColor = 0xffa502;
+    else if (m.type === 'blood_fiend') auraColor = 0xeb2f06;
+    else if (m.type === 'behemoth') auraColor = 0xff6b6b;
+    else if (m.type === 'wraith') auraColor = 0x8854d0;
+    else if (m.boss) auraColor = 0xff3838;
+
+    const auraGeo = new THREE.RingGeometry(size * 0.38, size * 0.52, 28);
+    const auraMat = new THREE.MeshBasicMaterial({
+      color: auraColor,
+      transparent: true,
+      opacity: 0.65,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+    const auraMesh = new THREE.Mesh(auraGeo, auraMat);
+    auraMesh.rotation.x = -Math.PI / 2;
+    auraMesh.position.y = 0.04;
+    group.add(auraMesh);
 
     // Overhead Health Bar
     const barW = size * 0.8;
@@ -998,9 +1031,117 @@ class Engine3D {
 
     group.add(barBg);
     group.add(barFill);
-    group.userData = { barFill: barFill, maxBarW: barW, spriteMat: spriteMat, monster: m };
+
+    // Glowing Overhead Monster Badge
+    const nameCanvas = document.createElement('canvas');
+    nameCanvas.width = 256;
+    nameCanvas.height = 64;
+    const nCtx = nameCanvas.getContext('2d');
+    nCtx.fillStyle = 'rgba(8, 10, 16, 0.85)';
+    nCtx.roundRect(6, 6, 244, 52, 10);
+    nCtx.fill();
+    const hexColor = auraColor.toString(16).padStart(6, '0');
+    nCtx.strokeStyle = `#${hexColor}`;
+    nCtx.lineWidth = 2.5;
+    nCtx.stroke();
+    nCtx.font = 'bold 22px sans-serif';
+    nCtx.fillStyle = '#ffffff';
+    nCtx.textAlign = 'center';
+    nCtx.textBaseline = 'middle';
+    const mIcon = m.boss ? '👑' : (m.type === 'void_drake' ? '🐉' : (m.type === 'frost_revenant' ? '❄️' : (m.type === 'chaos_elemental' ? '🔥' : (m.type === 'behemoth' ? '👹' : '💀'))));
+    nCtx.fillText(`${mIcon} ${m.name || 'Foe'}`, 128, 32);
+
+    const nameTex = new THREE.CanvasTexture(nameCanvas);
+    const nameMat = new THREE.MeshBasicMaterial({ map: nameTex, transparent: true, depthTest: false });
+    const nameMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.35), nameMat);
+    nameMesh.position.set(0, size + 0.42, 0);
+    group.add(nameMesh);
+
+    group.userData = { barFill: barFill, maxBarW: barW, spriteMat: spriteMat, monster: m, auraMesh: auraMesh };
 
     return group;
+  }
+
+  // Cinematic Kill VFX: Floor Shockwave Ring, Rising Ethereal Soul Orb, High-Density Particle Shatter & Screen Shake
+  triggerMonsterKillVFX(x, y, z, monster) {
+    if (!this.scene) return;
+
+    const mType = monster?.type || 'skeleton';
+    const isBoss = !!monster?.boss;
+
+    let primaryColor = 0xff4757;
+    let accentColor = 0xffb830;
+    if (mType === 'void_drake') {
+      primaryColor = 0xa855f7;
+      accentColor = 0x00d2d3;
+    } else if (mType === 'chaos_elemental') {
+      primaryColor = 0xff3838;
+      accentColor = 0xfffa65;
+    } else if (mType === 'frost_revenant') {
+      primaryColor = 0x00d2d3;
+      accentColor = 0x54a0ff;
+    } else if (mType === 'blood_fiend') {
+      primaryColor = 0xeb2f06;
+      accentColor = 0x800000;
+    } else if (mType === 'behemoth') {
+      primaryColor = 0xff6b6b;
+      accentColor = 0x5f27cd;
+    } else if (mType === 'wraith') {
+      primaryColor = 0x9b59b6;
+      accentColor = 0x34495e;
+    } else if (mType === 'orc') {
+      primaryColor = 0x2ed573;
+      accentColor = 0xf39c12;
+    }
+
+    // 1. Expanding Ground Shockwave Ring
+    const ringGeo = new THREE.RingGeometry(0.25, 0.45, 32);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: primaryColor,
+      transparent: true,
+      opacity: 0.95,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+    const shockwave = new THREE.Mesh(ringGeo, ringMat);
+    shockwave.rotation.x = -Math.PI / 2;
+    shockwave.position.set(x, 0.05, z);
+    this.scene.add(shockwave);
+
+    // 2. Rising Ethereal Soul / Spirit Orb
+    const orbGeo = new THREE.SphereGeometry(isBoss ? 0.38 : 0.22, 16, 16);
+    const orbMat = new THREE.MeshBasicMaterial({
+      color: accentColor,
+      transparent: true,
+      opacity: 0.9,
+      depthWrite: false
+    });
+    const soulOrb = new THREE.Mesh(orbGeo, orbMat);
+    soulOrb.position.set(x, (y || 0) + 0.6, z);
+    this.scene.add(soulOrb);
+
+    this.killVFXList.push({
+      shockwave,
+      soulOrb,
+      life: 0.75,
+      maxLife: 0.75,
+      x, y, z,
+      isBoss,
+      primaryColor,
+      accentColor
+    });
+
+    // 3. Dense 3D Particle Shatter Explosion
+    this.spawnParticleExplosion(x, (y || 0) + 0.9, z, primaryColor, isBoss ? 48 : 28);
+    this.spawnParticleExplosion(x, (y || 0) + 1.2, z, accentColor, isBoss ? 32 : 16);
+
+    // 4. 3D Slain Banner Popup
+    const bannerText = isBoss ? `★ ABYSSAL TITAN SLAIN! ★` : `★ SLAIN! +${monster?.xp || 20}XP ★`;
+    this.spawnDamagePopup(x, (y || 0) + 0.6, z, bannerText, isBoss ? '#fffa65' : '#ff4757', true);
+
+    // 5. Tactile Screen Shake
+    this.cameraShakeTime = isBoss ? 0.38 : 0.20;
+    this.cameraShakeIntensity = isBoss ? 0.22 : 0.10;
   }
 
   updateMonsterHealthBar(group, m) {
@@ -1193,6 +1334,15 @@ class Engine3D {
       this.camera.rotation.set(this.pitch + this.cameraPitchOffset, this.playerAngle + this.cameraYawOffset, 0, 'YXZ');
     }
 
+    // 4b. Tactile Camera Screen Shake for Crits and Kills
+    if (this.cameraShakeTime > 0) {
+      this.cameraShakeTime -= dt;
+      const shakeAmt = this.cameraShakeIntensity * Math.max(0, this.cameraShakeTime / 0.35);
+      this.camera.position.x += (Math.random() - 0.5) * shakeAmt;
+      this.camera.position.y += (Math.random() - 0.5) * shakeAmt;
+      this.camera.position.z += (Math.random() - 0.5) * shakeAmt;
+    }
+
     // 5. Player Torch Light (always follows hero)
     if (this.playerLight) {
       this.playerLight.position.set(
@@ -1271,6 +1421,41 @@ class Engine3D {
       if (p.userData.life <= 0 || p.position.y <= 0) {
         this.scene.remove(p);
         this.particles3D.splice(i, 1);
+      }
+    }
+
+    // 11. Update Kill VFX (Expanding Shockwaves & Ascending Soul Orbs)
+    for (let i = this.killVFXList.length - 1; i >= 0; i--) {
+      const vfx = this.killVFXList[i];
+      vfx.life -= dt;
+      const progress = 1.0 - (vfx.life / vfx.maxLife);
+      const alpha = Math.max(0, vfx.life / vfx.maxLife);
+
+      if (vfx.shockwave) {
+        const ringScale = 1.0 + progress * (vfx.isBoss ? 5.2 : 3.4);
+        vfx.shockwave.scale.set(ringScale, ringScale, 1);
+        vfx.shockwave.material.opacity = alpha * 0.95;
+      }
+
+      if (vfx.soulOrb) {
+        vfx.soulOrb.position.y += dt * (vfx.isBoss ? 3.0 : 2.2);
+        vfx.soulOrb.position.x += Math.sin(progress * 12) * 0.02;
+        vfx.soulOrb.material.opacity = alpha * 0.95;
+        const orbScale = Math.max(0.2, 1.0 - progress * 0.45);
+        vfx.soulOrb.scale.set(orbScale, orbScale, orbScale);
+      }
+
+      if (vfx.life <= 0) {
+        if (vfx.shockwave) this.scene.remove(vfx.shockwave);
+        if (vfx.soulOrb) this.scene.remove(vfx.soulOrb);
+        this.killVFXList.splice(i, 1);
+      }
+    }
+
+    // 12. Rotate Monster Elemental Ground Auras
+    for (const [_, mMesh] of this.monsterMeshes.entries()) {
+      if (mMesh.userData?.auraMesh) {
+        mMesh.userData.auraMesh.rotation.z += dt * 1.8;
       }
     }
 

@@ -539,6 +539,13 @@ class GameEngine {
       window.gameAudio.playAttack();
     }
 
+    // Modern Action Dock tactile feedback
+    const dockAtk = document.getElementById('dockAttackSlot');
+    if (dockAtk) {
+      dockAtk.classList.add('active-slash');
+      setTimeout(() => dockAtk.classList.remove('active-slash'), 200);
+    }
+
     const px = this.player.worldX;
     const pz = this.player.worldZ;
     const reach = 2.4; // Melee reach
@@ -726,6 +733,15 @@ class GameEngine {
 
     this.player.mana -= ab.cost;
     this.updateHUD();
+
+    // Modern Action Dock active cast effect
+    const dockSkill = (abId === this.player?.abilities?.[0]?.id) ? document.getElementById('dockSkillQ')
+      : (abId === this.player?.abilities?.[1]?.id ? document.getElementById('dockSkillE')
+      : document.getElementById('dockSkillR'));
+    if (dockSkill) {
+      dockSkill.classList.add('active-cast');
+      setTimeout(() => dockSkill.classList.remove('active-cast'), 300);
+    }
 
     if (window.multiplayerClient?.isOnline) {
       window.multiplayerClient.broadcastAction(abId);
@@ -1075,6 +1091,110 @@ class GameEngine {
     if (goldEl) goldEl.textContent = `${this.player.gold} G`;
     const scoreEl = document.getElementById('hudScore');
     if (scoreEl) scoreEl.textContent = `Score: ${this.score}`;
+
+    // --- 2026 Sleek Floating In-Game Action Dock Synchronization ---
+    const dockHpVal = document.getElementById('dockHpVal');
+    const dockHpCircle = document.getElementById('dockHpCircle');
+    if (dockHpVal) dockHpVal.textContent = this.player.hp;
+    if (dockHpCircle) {
+      const circ = 2 * Math.PI * 32; // ~201.06
+      const pct = Math.max(0, Math.min(1.0, this.player.hp / this.player.max_hp));
+      dockHpCircle.style.strokeDasharray = `${circ}`;
+      dockHpCircle.style.strokeDashoffset = `${circ * (1.0 - pct)}`;
+      const hpMeter = document.getElementById('dockHpMeter');
+      if (hpMeter) {
+        if (pct <= 0.3) hpMeter.classList.add('critical-pulse');
+        else hpMeter.classList.remove('critical-pulse');
+      }
+    }
+
+    const dockManaVal = document.getElementById('dockManaVal');
+    const dockManaCircle = document.getElementById('dockManaCircle');
+    if (dockManaVal) dockManaVal.textContent = Math.round(this.player.mana);
+    if (dockManaCircle) {
+      const circ = 2 * Math.PI * 32;
+      const pct = Math.max(0, Math.min(1.0, this.player.mana / this.player.max_mana));
+      dockManaCircle.style.strokeDasharray = `${circ}`;
+      dockManaCircle.style.strokeDashoffset = `${circ * (1.0 - pct)}`;
+    }
+
+    const dockXpFill = document.getElementById('dockXpFill');
+    const dockXpBadge = document.getElementById('dockXpBadge');
+    if (dockXpFill) {
+      const xpPct = Math.max(0, Math.min(100, Math.round((this.player.xp / this.player.next_xp) * 100)));
+      dockXpFill.style.width = `${xpPct}%`;
+      if (dockXpBadge) dockXpBadge.textContent = `LV.${this.player.level} • ${xpPct}%`;
+    }
+
+    // Update Dock Abilities
+    if (this.player.abilities) {
+      const skillSlots = [
+        { id: 'dockSkillQ', ab: this.player.abilities[0], iconId: 'dockSkillQIcon', nameId: 'dockSkillQName', costId: 'dockSkillQCost' },
+        { id: 'dockSkillE', ab: this.player.abilities[1], iconId: 'dockSkillEIcon', nameId: 'dockSkillEName', costId: 'dockSkillECost' },
+        { id: 'dockSkillR', ab: this.player.abilities[2], iconId: 'dockSkillRIcon', nameId: 'dockSkillRName', costId: 'dockSkillRCost' }
+      ];
+
+      const abilityIcons = {
+        cleave: '🌪️',
+        bash: '🛡️',
+        missile: '✨',
+        meteor: '☄️',
+        blink: '🌌',
+        shadow_strike: '🗡️',
+        poison_blade: '🧪'
+      };
+
+      skillSlots.forEach(s => {
+        const slotEl = document.getElementById(s.id);
+        if (!slotEl) return;
+        if (s.ab) {
+          slotEl.style.display = 'flex';
+          const iconEl = document.getElementById(s.iconId);
+          const nameEl = document.getElementById(s.nameId);
+          const costEl = document.getElementById(s.costId);
+          if (iconEl) iconEl.textContent = abilityIcons[s.ab.id] || '⚡';
+          if (nameEl) nameEl.textContent = s.ab.name.split(' ')[0];
+          if (costEl) costEl.textContent = `${s.ab.cost} MP`;
+
+          if (this.player.mana < s.ab.cost) {
+            slotEl.classList.add('mana-depleted');
+          } else {
+            slotEl.classList.remove('mana-depleted');
+          }
+        } else {
+          slotEl.style.display = 'none';
+        }
+      });
+    }
+
+    // Update Dock Potions
+    const potSlots = [
+      { id: 'dockPot1', iconId: 'dockPot1Icon', qtyId: 'dockPot1Qty', item: this.player.inventory?.[0] },
+      { id: 'dockPot2', iconId: 'dockPot2Icon', qtyId: 'dockPot2Qty', item: this.player.inventory?.[1] },
+      { id: 'dockPot3', iconId: 'dockPot3Icon', qtyId: 'dockPot3Qty', item: this.player.inventory?.[2] }
+    ];
+
+    potSlots.forEach((ps, idx) => {
+      const slotEl = document.getElementById(ps.id);
+      if (!slotEl) return;
+      if (ps.item) {
+        slotEl.style.opacity = '1';
+        slotEl.title = `Use ${ps.item.name} [Key: ${idx + 1}]`;
+        const iconEl = document.getElementById(ps.iconId);
+        const qtyEl = document.getElementById(ps.qtyId);
+        if (iconEl) {
+          if (ps.item.type.includes('health')) iconEl.textContent = '🧪';
+          else if (ps.item.type.includes('mana')) iconEl.textContent = '💧';
+          else iconEl.textContent = '📜';
+        }
+        if (qtyEl) qtyEl.textContent = `${idx + 1}`;
+      } else {
+        slotEl.style.opacity = '0.35';
+        slotEl.title = `Empty Belt Slot [${idx + 1}]`;
+        const qtyEl = document.getElementById(ps.qtyId);
+        if (qtyEl) qtyEl.textContent = '—';
+      }
+    });
 
     this.renderInventoryUI();
     this.renderEquipmentUI();

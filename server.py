@@ -441,7 +441,12 @@ class DungeonGenerator:
             {"type": "goblin", "name": "Goblin Archer", "hp": 16, "atk": 9, "def": 1, "xp": 22, "icon": "goblin", "color": "#44bd32", "ranged": True},
             {"type": "slime", "name": "Abyssal Slime", "hp": 28, "atk": 5, "def": 3, "xp": 15, "icon": "slime", "color": "#9c88ff"},
             {"type": "shade", "name": "Crypt Phantom", "hp": 20, "atk": 11, "def": 0, "xp": 30, "icon": "shade", "color": "#00d2d3", "flying": True},
-            {"type": "orc", "name": "Orc Berserker", "hp": 40, "atk": 14, "def": 4, "xp": 45, "icon": "orc", "color": "#e74c3c"}
+            {"type": "blood_fiend", "name": "Crimson Blood Fiend", "hp": 36, "atk": 17, "def": 3, "xp": 55, "icon": "fiend", "color": "#c0392b"},
+            {"type": "orc", "name": "Orc Berserker", "hp": 40, "atk": 14, "def": 4, "xp": 45, "icon": "orc", "color": "#e74c3c"},
+            {"type": "chaos_elemental", "name": "Chaos Core Elemental", "hp": 44, "atk": 16, "def": 4, "xp": 70, "icon": "elemental", "color": "#ff793f", "caster": True},
+            {"type": "frost_revenant", "name": "Glacial Frost Revenant", "hp": 54, "atk": 20, "def": 6, "xp": 85, "icon": "revenant", "color": "#00d2d3"},
+            {"type": "void_drake", "name": "Void Nether Drake", "hp": 50, "atk": 19, "def": 5, "xp": 80, "icon": "void_drake", "color": "#9b59b6", "ranged": True, "flying": True},
+            {"type": "behemoth", "name": "Abyssal Titan Behemoth", "hp": 76, "atk": 25, "def": 7, "xp": 125, "icon": "behemoth", "color": "#e67e22", "elite": True}
         ]
 
         if self.floor >= 3:
