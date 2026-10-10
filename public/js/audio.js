@@ -359,9 +359,46 @@ class SoundEngine {
 
     this.bgmGain.connect(this.ctx.destination);
     this.isBgmPlaying = true;
+
+    // Periodic dark ambient dungeon synth melody motif
+    if (this.bgmInterval) clearInterval(this.bgmInterval);
+    this.bgmInterval = setInterval(() => {
+      if (!this.isBgmPlaying || !this.ctx || this.ctx.state !== 'running') return;
+      this.playSynthMotif();
+    }, 6500);
+  }
+
+  playSynthMotif() {
+    if (!this.ctx || !this.bgmEnabled) return;
+    const scale = [220.0, 261.63, 329.63, 392.0, 440.0, 329.63];
+    const now = this.ctx.currentTime;
+    scale.forEach((f, idx) => {
+      const osc = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      const filter = this.ctx.createBiquadFilter();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, now + idx * 0.3);
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(700, now + idx * 0.3);
+
+      g.gain.setValueAtTime(0.05 * this.masterVolume, now + idx * 0.3);
+      g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.3 + 0.5);
+
+      osc.connect(filter);
+      filter.connect(g);
+      g.connect(this.ctx.destination);
+
+      osc.start(now + idx * 0.3);
+      osc.stop(now + idx * 0.3 + 0.52);
+    });
   }
 
   stopAmbientBGM() {
+    if (this.bgmInterval) {
+      clearInterval(this.bgmInterval);
+      this.bgmInterval = null;
+    }
     if (this.bgmOscillators.length > 0) {
       this.bgmOscillators.forEach(osc => {
         try { osc.stop(); } catch(e) {}

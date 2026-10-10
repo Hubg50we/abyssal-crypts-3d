@@ -18,6 +18,16 @@ class Engine3D {
     this.viewMode = 'ACTION_RPG';
     this.pitch = 0;
 
+    // Mouse Controls, Camera Orbit & Wheel Zoom
+    this.cameraYawOffset = 0;       // Mouse orbit yaw around player (radians)
+    this.cameraPitchOffset = 0;     // Mouse vertical pitch tilt (radians)
+    this.cameraZoom = 1.0;          // Mouse wheel zoom scale (0.6x - 2.2x)
+    this.isMouseDragging = false;
+    this.lastMouseX = 0;
+    this.lastMouseY = 0;
+    this.mouseLookActive = false;   // Pointer lock / FPS style mouse look
+    this.isPointerLocked = false;
+
     // Player position and facing in 3D world space
     this.playerPos = new THREE.Vector3(0, 0, 0);
     this.playerAngle = 0; // Radians, 0 = North (negative Z)
@@ -102,11 +112,98 @@ class Engine3D {
     this.createHeroModel();
     this.createFirstPersonWeaponViewmodel();
 
-    // 6. Canvas Mouse Click (Attack or Target)
-    this.renderer.domElement.addEventListener('mousedown', (e) => {
-      // Left click attacks in real-time
-      if (e.button === 0 && window.gameEngine) {
-        window.gameEngine.triggerPlayerAttack();
+    // 6. Comprehensive Mouse Controls (Left-Click Trigger, Right-Click Drag Orbit, Scroll Zoom, Mouse Look)
+    const dom = this.renderer.domElement;
+
+    // Prevent default browser context menu on canvas so right-click can orbit camera
+    dom.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    dom.addEventListener('mousedown', (e) => {
+      if (e.button === 0) {
+        // Left Click: Trigger Melee Attack or Active Ability
+        if (this.mouseLookActive && document.pointerLockElement !== dom) {
+          dom.requestPointerLock?.();
+        }
+        if (window.gameEngine) {
+          window.gameEngine.triggerPlayerAttack();
+        }
+      } else if (e.button === 2) {
+        // Right Click: Trigger Camera Drag Orbit
+        this.isMouseDragging = true;
+        this.lastMouseX = e.clientX;
+        this.lastMouseY = e.clientY;
+      }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      // 1. Pointer-Lock FPS/3rd-Person Free Mouse Look
+      if (document.pointerLockElement === dom) {
+        const dx = e.movementX || 0;
+        const dy = e.movementY || 0;
+        const sensitivity = 0.0032;
+
+        if (this.viewMode === 'FIRST_PERSON') {
+          this.playerAngle -= dx * sensitivity;
+          if (window.gameEngine?.player) {
+            window.gameEngine.player.facingAngle = this.playerAngle;
+          }
+          this.pitch = Math.max(-0.8, Math.min(0.8, this.pitch - dy * sensitivity));
+        } else if (this.viewMode === 'OVER_SHOULDER') {
+          this.playerAngle -= dx * sensitivity;
+          if (window.gameEngine?.player) {
+            window.gameEngine.player.facingAngle = this.playerAngle;
+          }
+          this.cameraPitchOffset = Math.max(-0.5, Math.min(0.6, this.cameraPitchOffset - dy * sensitivity));
+        } else {
+          // Action RPG View
+          this.cameraYawOffset -= dx * sensitivity;
+          this.cameraPitchOffset = Math.max(-0.5, Math.min(0.6, this.cameraPitchOffset - dy * sensitivity));
+        }
+        return;
+      }
+
+      // 2. Right-Click Drag Orbit
+      if (this.isMouseDragging) {
+        const dx = e.clientX - this.lastMouseX;
+        const dy = e.clientY - this.lastMouseY;
+        this.lastMouseX = e.clientX;
+        this.lastMouseY = e.clientY;
+
+        const sensitivity = 0.005;
+        this.cameraYawOffset -= dx * sensitivity;
+        this.cameraPitchOffset = Math.max(-0.5, Math.min(0.6, this.cameraPitchOffset - dy * sensitivity));
+
+        // In 1st person or 3rd person, also turn character
+        if (this.viewMode === 'FIRST_PERSON' || this.viewMode === 'OVER_SHOULDER') {
+          this.playerAngle -= dx * sensitivity;
+          if (window.gameEngine?.player) {
+            window.gameEngine.player.facingAngle = this.playerAngle;
+          }
+        }
+      }
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (e.button === 2) {
+        this.isMouseDragging = false;
+      }
+    });
+
+    // Mouse Wheel Camera Zoom Trigger
+    dom.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const zoomDelta = e.deltaY * 0.001;
+      this.cameraZoom = Math.max(0.6, Math.min(2.2, this.cameraZoom + zoomDelta));
+    }, { passive: false });
+
+    // Pointer Lock change listener
+    document.addEventListener('pointerlockchange', () => {
+      const isLocked = (document.pointerLockElement === dom);
+      this.isPointerLocked = isLocked;
+      const btn = document.getElementById('btnMouseLookToggle');
+      if (btn) {
+        btn.textContent = isLocked ? '🖱️ Mouse Look: LOCKED [ESC]' : (this.mouseLookActive ? '🖱️ Mouse Look: READY' : '🖱️ Mouse Look: OFF');
+        btn.style.color = isLocked ? 'var(--color-cyan)' : '';
       }
     });
 
@@ -136,6 +233,34 @@ class Engine3D {
 
     this.updateCameraVisibility();
     return this.viewMode;
+  }
+
+  toggleMouseLook() {
+    this.mouseLookActive = !this.mouseLookActive;
+    const dom = this.renderer?.domElement;
+    if (this.mouseLookActive && dom) {
+      dom.requestPointerLock?.();
+    } else if (document.exitPointerLock) {
+      document.exitPointerLock();
+    }
+    const btn = document.getElementById('btnMouseLookToggle');
+    if (btn) {
+      btn.textContent = this.mouseLookActive ? '🖱️ Mouse Look: ON [U]' : '🖱️ Mouse Look: OFF [U]';
+      btn.style.color = this.mouseLookActive ? 'var(--color-cyan)' : '';
+    }
+    window.gameEngine?.addLog(
+      this.mouseLookActive 
+        ? '🖱️ Mouse Look ENABLED: Mouse movement aims/turns. Right-Click drag orbits. Wheel zooms.' 
+        : '🖱️ Mouse Look DISABLED: Standard cursor mode.',
+      'gold'
+    );
+    return this.mouseLookActive;
+  }
+
+  resetCameraOrbit() {
+    this.cameraYawOffset = 0;
+    this.cameraPitchOffset = 0;
+    this.cameraZoom = 1.0;
   }
 
   updateCameraVisibility() {
@@ -976,39 +1101,47 @@ class Engine3D {
       group.lookAt(this.camera.position.x, group.position.y, this.camera.position.z);
     }
 
-    // 4. Camera Positioning per Mode
+    // 4. Camera Positioning per Mode (Integrated with Mouse Orbit, Pitch & Zoom)
     if (this.viewMode === 'ACTION_RPG') {
-      // Modern Top-Down Isometric 3D Action RPG View (Zero Wall Clipping)
-      const camElev = 7.0;
-      const camBack = 5.2;
-      this.camera.position.set(
-        this.playerPos.x,
-        this.playerPos.y + camElev,
-        this.playerPos.z + camBack
-      );
+      // Modern Top-Down Isometric 3D Action RPG View with Mouse Orbit
+      const baseElev = 7.0;
+      const baseDist = 5.2;
+      const dist = baseDist * this.cameraZoom;
+      const elev = (baseElev + this.cameraPitchOffset * 3.5) * this.cameraZoom;
+
+      const cx = this.playerPos.x + Math.sin(this.cameraYawOffset) * dist;
+      const cz = this.playerPos.z + Math.cos(this.cameraYawOffset) * dist;
+      const cy = this.playerPos.y + elev;
+
+      this.camera.position.set(cx, cy, cz);
       this.camera.lookAt(
         this.playerPos.x,
         this.playerPos.y + 0.9,
         this.playerPos.z - 0.4
       );
     } else if (this.viewMode === 'OVER_SHOULDER') {
-      // Over the shoulder 3rd person with wall-clipping avoidance (behind hero looking forward)
-      const camDist = 3.6;
-      const camH = 2.4;
-      const cx = this.playerPos.x + Math.sin(this.playerAngle) * camDist;
-      const cz = this.playerPos.z + Math.cos(this.playerAngle) * camDist;
+      // Over the shoulder 3rd person with mouse orbit & pitch
+      const baseDist = 3.6;
+      const baseH = 2.4;
+      const dist = baseDist * this.cameraZoom;
+      const elev = (baseH + this.cameraPitchOffset * 2.0) * this.cameraZoom;
 
-      this.camera.position.set(cx, this.playerPos.y + camH, cz);
+      const angle = this.playerAngle + this.cameraYawOffset;
+      const cx = this.playerPos.x + Math.sin(angle) * dist;
+      const cz = this.playerPos.z + Math.cos(angle) * dist;
+      const cy = this.playerPos.y + elev;
+
+      this.camera.position.set(cx, cy, cz);
       this.camera.lookAt(
-        this.playerPos.x - Math.sin(this.playerAngle) * 2.0,
-        this.playerPos.y + 1.2,
-        this.playerPos.z - Math.cos(this.playerAngle) * 2.0
+        this.playerPos.x - Math.sin(angle) * 2.0,
+        this.playerPos.y + 1.2 - this.cameraPitchOffset * 1.5,
+        this.playerPos.z - Math.cos(angle) * 2.0
       );
     } else {
       // FIRST_PERSON View
       const bob = this.isMoving ? Math.sin(this.walkAnimTime) * 0.04 : 0;
       this.camera.position.set(this.playerPos.x, 1.45 + bob, this.playerPos.z);
-      this.camera.rotation.set(this.pitch, this.playerAngle, 0, 'YXZ');
+      this.camera.rotation.set(this.pitch + this.cameraPitchOffset, this.playerAngle + this.cameraYawOffset, 0, 'YXZ');
     }
 
     // 5. Player Torch Light (always follows hero)

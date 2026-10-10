@@ -1230,6 +1230,13 @@ class GameEngine {
         return;
       }
 
+      // U -> Toggle Mouse Look / Pointer Lock (Aim & Look with Mouse)
+      if (e.key === 'u' || e.key === 'U') {
+        e.preventDefault();
+        window.engine3D?.toggleMouseLook();
+        return;
+      }
+
       // Quick Inventory 1-6
       const num = parseInt(e.key);
       if (!isNaN(num) && num >= 1 && num <= 6) {

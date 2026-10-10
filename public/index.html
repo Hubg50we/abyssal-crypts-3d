@@ -22,12 +22,14 @@
 
     <div class="header-controls">
       <button class="icon-btn" id="btnCameraToggle" title="Click or Press V to Cycle Camera Mode (Action RPG / 3rd Person / 1st Person)" onclick="window.toggleCameraMode()">🎥 Camera: Action RPG [V]</button>
+      <button class="icon-btn" id="btnMouseLookToggle" title="Toggle Mouse Camera Control (Mouse Look / Orbit / Aim [U])" onclick="window.engine3D?.toggleMouseLook()">🖱️ Mouse Look: OFF [U]</button>
       <button class="icon-btn" id="btnTacticalMap" title="Open Holographic Tactical Map [M]" onclick="window.modernMap?.toggleTacticalModal()">🗺 Map [M]</button>
       <button class="icon-btn" id="btnControlMode" title="Toggle A/D Controls: Strafe vs Turn [T]">🕹 A/D: Strafe</button>
       <button class="icon-btn" id="btnAiBotToggle" title="Toggle AI Bot Autonomous Playtester" style="color: var(--color-gold); border-color: rgba(255,184,48,0.4);">🤖 AI Bot: Auto Play</button>
       <button class="icon-btn" id="btnAiDiagnostics" title="Run Automated AI Diagnostics Test Suite">🧪 Run Tests</button>
       <button class="icon-btn" id="btnSpeedToggle" title="Adjust Walking Pacing">🏃 Move: Agile</button>
-      <button class="icon-btn" id="btnAudioToggle" title="Toggle Sound">🔊 Audio</button>
+      <button class="icon-btn" id="btnMusicToggle" title="Toggle Atmospheric Dungeon Synth Music [BGM]">🎵 Music: ON</button>
+      <button class="icon-btn" id="btnAudioToggle" title="Toggle Sound Effects [SFX]">🔊 SFX: ON</button>
       <button class="icon-btn" id="btnLeaderboard" title="View High Scores">🏆 Hall of Fame</button>
       <button class="icon-btn" id="btnControls" title="How to Play">❓ Controls</button>
     </div>
@@ -41,7 +43,7 @@
       <canvas id="gameCanvas"></canvas>
 
       <!-- Floating In-Game Camera Toggle Button (Top-Left of 3D Canvas) -->
-      <div class="hud-camera-pill" id="hudCameraPill" onclick="window.toggleCameraMode()" title="Click to Cycle Camera View: Action RPG -> 3rd Person -> 1st Person (or press V)">
+      <div class="hud-camera-pill" id="hudCameraPill" onclick="window.toggleCameraMode()" title="Click to Cycle Camera View: Action RPG -> 3rd Person -> 1st Person (or press V). Right-Drag to Orbit, Scroll to Zoom.">
         <span class="camera-icon">🎥</span>
         <span id="hudCameraText">Camera: Action RPG 3D</span>
         <span class="camera-hotkey-badge">V</span>
@@ -81,12 +83,12 @@
 
       <div class="canvas-overlay-hints">
         <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move</span>
-        <span><kbd>T</kbd> Strafe/Turn</span>
-        <span><kbd>M</kbd> Tactical Map</span>
-        <span><kbd>Space</kbd> / Click: Attack</span>
-        <span><kbd>Q</kbd>/<kbd>E</kbd>/<kbd>R</kbd> Skills</span>
-        <span><kbd>1</kbd>-<kbd>6</kbd> Items</span>
-        <span><kbd>V</kbd> Camera</span>
+        <span><kbd>Left-Click</kbd> Attack</span>
+        <span><kbd>Right-Drag</kbd> Orbit Cam</span>
+        <span><kbd>Scroll</kbd> Zoom</span>
+        <span><kbd>U</kbd> Mouse Look</span>
+        <span><kbd>V</kbd> Camera Mode</span>
+        <span><kbd>M</kbd> Map</span>
       </div>
 
       <!-- On-Screen Virtual Action D-Pad -->
@@ -355,22 +357,16 @@
         <br>&nbsp;&nbsp;• <em>Strafe Mode</em>: <kbd>A</kbd>/<kbd>D</kbd> strafes Left/Right, <kbd>Q</kbd>/<kbd>E</kbd> or Arrow keys turn.
         <br>&nbsp;&nbsp;• <em>Turn Mode</em>: <kbd>A</kbd>/<kbd>D</kbd> turns camera Left/Right, <kbd>Q</kbd>/<kbd>E</kbd> strafes.
       </p>
-      <p style="margin-bottom: 12px;"><strong>Combat:</strong>
-        <br>• <kbd>Space</kbd> or <strong>Left-Click</strong>: <strong>Attack & Slash</strong> in real-time with your equipped weapon!
-        <br>• Monsters take damage, get knocked back, and drop loot upon defeat.
+      <p style="margin-bottom: 12px;"><strong>Mouse & Camera Controls:</strong>
+        <br>• <strong>Left-Click</strong>: <strong>Attack / Trigger Slash / Spellcast</strong> in real-time.
+        <br>• <strong>Right-Click Drag</strong>: <strong>Orbit 3D Camera 360°</strong> and adjust vertical tilt/pitch around your hero!
+        <br>• <strong>Mouse Wheel (Scroll)</strong>: <strong>Zoom 3D Camera In / Out</strong> (0.6x close up to 2.2x wide tactical overview).
+        <br>• <kbd>U</kbd> or click <strong>🖱️ Mouse Look</strong>: Lock the pointer for authentic first-person & third-person mouse aiming & turning (Press <kbd>ESC</kbd> to unlock).
+        <br>• <kbd>V</kbd> or click <strong>🎥 Camera</strong>: Switch between <em>Action RPG 3D</em>, <em>3rd Person 3D</em>, and <em>1st Person 3D</em>.
       </p>
-      <p style="margin-bottom: 12px;"><strong>Skills & Magic:</strong>
-        <br>• <kbd>Q</kbd>, <kbd>E</kbd>, <kbd>R</kbd>: Cast your class's active abilities (Whirlwind, Shield Bash, Arcane Bolt, Meteor Blast, Blink Teleport, Shadow Dash, Poison Dart)!
-      </p>
-      <p style="margin-bottom: 12px;"><strong>Items & Gear:</strong>
-        <br>• <kbd>1</kbd> - <kbd>6</kbd>: Quick-drink potions or cast scrolls from inventory.
-        <br>• Walk near gold and treasure to automatically pick them up!
-      </p>
-      <p style="margin-bottom: 12px;"><strong>3D Camera Modes:</strong>
-        <br>• Press <kbd>V</kbd> or click <strong>🎥 Camera</strong> in the header to switch between:
-        <br>&nbsp;&nbsp;1. <strong>Action RPG 3D</strong> (Top-down isometric view with zero wall clipping)
-        <br>&nbsp;&nbsp;2. <strong>3rd Person 3D</strong> (Over-the-shoulder chase camera)
-        <br>&nbsp;&nbsp;3. <strong>1st Person 3D</strong> (Classic immersive first-person perspective)
+      <p style="margin-bottom: 12px;"><strong>Audio & Music:</strong>
+        <br>• Click <strong>🎵 Music</strong>: Toggle atmospheric dark dungeon synth background soundtrack [BGM].
+        <br>• Click <strong>🔊 SFX</strong>: Toggle retro 16-bit sound effects.
       </p>
       <p style="margin-bottom: 12px;"><strong>Modern Holographic Map:</strong>
         <br>• Press <kbd>M</kbd> or click <strong>🗺 Map [M]</strong>: Open the <strong>Tactical Reconnaissance Scanner</strong> with full subterranean topography, zoom/pan controls, exploration progress, and live telemetry!
@@ -525,11 +521,19 @@
       }
     };
 
+    document.getElementById('btnMusicToggle').addEventListener('click', () => {
+      if (window.gameAudio) {
+        const bgm = window.gameAudio.toggleBGM();
+        document.getElementById('btnMusicToggle').textContent = bgm ? '🎵 Music: ON' : '🎵 Music: OFF';
+        window.gameEngine?.addLog(bgm ? '🎵 Dark dungeon synth soundtrack enabled.' : '🎵 Dungeon music muted.', 'cyan');
+      }
+    });
+
     document.getElementById('btnAudioToggle').addEventListener('click', () => {
       if (window.gameAudio) {
         const sfx = window.gameAudio.toggleSFX();
-        const bgm = window.gameAudio.toggleBGM();
-        document.getElementById('btnAudioToggle').textContent = (sfx || bgm) ? '🔊 Audio' : '🔇 Muted';
+        document.getElementById('btnAudioToggle').textContent = sfx ? '🔊 SFX: ON' : '🔇 SFX: OFF';
+        window.gameEngine?.addLog(sfx ? '🔊 Sound effects enabled.' : '🔇 Sound effects muted.', 'cyan');
       }
     });
 
