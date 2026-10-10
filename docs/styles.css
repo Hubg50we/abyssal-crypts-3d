@@ -590,14 +590,21 @@ dialog::backdrop {
 }
 
 /* ==========================================================================
-   FLOATING HUD CAMERA TOGGLE & PERSPECTIVE SELECTOR
+   FLOATING HUD CAMERA & MOUSE LOCK CONTROLS (ON SCREEN)
    ========================================================================== */
 
-.hud-camera-pill {
+.hud-topleft-controls {
   position: absolute;
   top: 16px;
   left: 16px;
   z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.hud-control-pill, .hud-camera-pill {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -613,11 +620,10 @@ dialog::backdrop {
   cursor: pointer;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 14px rgba(255, 184, 48, 0.2);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  pointer-events: auto;
   user-select: none;
 }
 
-.hud-camera-pill:hover {
+.hud-control-pill:hover, .hud-camera-pill:hover {
   background: rgba(26, 32, 50, 0.95);
   border-color: var(--color-gold);
   color: #fff;
@@ -625,12 +631,28 @@ dialog::backdrop {
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7), 0 0 22px rgba(255, 184, 48, 0.45);
 }
 
-.hud-camera-pill:active {
+.hud-control-pill:active, .hud-camera-pill:active {
   transform: translateY(0) scale(0.98);
 }
 
-.hud-camera-pill .camera-icon {
+.mouselock-pill.locked-active {
+  background: rgba(0, 245, 212, 0.18) !important;
+  border-color: var(--color-cyan) !important;
+  color: var(--color-cyan) !important;
+  box-shadow: 0 0 20px rgba(0, 245, 212, 0.4) !important;
+  animation: pulse-cyan-glow 1.8s infinite alternate ease-in-out;
+}
+
+@keyframes pulse-cyan-glow {
+  0% { box-shadow: 0 0 12px rgba(0, 245, 212, 0.3); }
+  100% { box-shadow: 0 0 24px rgba(0, 245, 212, 0.65); }
+}
+
+.pill-icon, .camera-icon {
   font-size: 1.15rem;
+}
+
+.hud-camera-pill .camera-icon {
   animation: pulse-camera 2s infinite ease-in-out;
 }
 
@@ -639,7 +661,7 @@ dialog::backdrop {
   50% { transform: scale(1.15); }
 }
 
-.camera-hotkey-badge {
+.pill-hotkey, .camera-hotkey-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -651,6 +673,81 @@ dialog::backdrop {
   font-size: 0.65rem;
   padding: 2px 6px;
   margin-left: 4px;
+}
+
+.mouselock-pill.locked-active .pill-hotkey {
+  background: rgba(0, 245, 212, 0.2);
+  color: var(--color-cyan);
+  border-color: rgba(0, 245, 212, 0.6);
+}
+
+/* On-Screen Center Crosshair Aiming Reticle */
+.hud-aim-reticle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  pointer-events: none;
+  z-index: 9;
+}
+
+.reticle-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  background: var(--color-cyan);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 8px var(--color-cyan);
+}
+
+.reticle-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 1.5px dashed rgba(0, 245, 212, 0.55);
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(0, 245, 212, 0.25);
+  animation: rotate-reticle 12s linear infinite;
+}
+
+@keyframes rotate-reticle {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* On-Screen Mouse Lock Toast Banner */
+.hud-mouselock-toast {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(10, 14, 24, 0.94);
+  border: 1px solid var(--color-cyan);
+  border-radius: 24px;
+  padding: 8px 22px;
+  color: var(--color-cyan);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.88rem;
+  z-index: 15;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 245, 212, 0.35);
+  pointer-events: none;
+  text-align: center;
+  letter-spacing: 0.3px;
+  animation: toast-slide-down 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes toast-slide-down {
+  from { opacity: 0; transform: translate(-50%, -12px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
 }
 
 /* ==========================================================================

@@ -196,14 +196,71 @@ class Engine3D {
       this.cameraZoom = Math.max(0.6, Math.min(2.2, this.cameraZoom + zoomDelta));
     }, { passive: false });
 
-    // Pointer Lock change listener
+    // Comprehensive Pointer Lock Change Listener (Sync On-Screen HUD & Reticle)
     document.addEventListener('pointerlockchange', () => {
       const isLocked = (document.pointerLockElement === dom);
       this.isPointerLocked = isLocked;
-      const btn = document.getElementById('btnMouseLookToggle');
-      if (btn) {
-        btn.textContent = isLocked ? '🖱️ Mouse Look: LOCKED [ESC]' : (this.mouseLookActive ? '🖱️ Mouse Look: READY' : '🖱️ Mouse Look: OFF');
-        btn.style.color = isLocked ? 'var(--color-cyan)' : '';
+      if (isLocked) {
+        this.mouseLookActive = true;
+      }
+
+      // 1. On-Screen Floating Mouse Lock Pill
+      const pill = document.getElementById('hudMouseLockPill');
+      const icon = document.getElementById('hudMouseLockIcon');
+      const text = document.getElementById('hudMouseLockText');
+      if (pill) {
+        if (isLocked) {
+          pill.classList.add('locked-active');
+          pill.title = 'Mouse is LOCKED on Screen. Click or press ESC to unlock.';
+        } else {
+          pill.classList.remove('locked-active');
+          pill.title = 'Click to Lock Mouse on Screen (Hotkey: U)';
+        }
+      }
+      if (icon) icon.textContent = isLocked ? '🔒' : '🖱️';
+      if (text) text.textContent = isLocked ? 'Mouse: LOCKED [ESC]' : 'Mouse Lock: OFF';
+
+      // 2. Center Screen Aiming Crosshair / Reticle
+      const reticle = document.getElementById('hudAimReticle');
+      if (reticle) reticle.style.display = isLocked ? 'block' : 'none';
+
+      // 3. On-Screen Toast Notification
+      const toast = document.getElementById('hudMouseLockToast');
+      if (toast) {
+        if (isLocked) {
+          toast.style.display = 'block';
+          toast.textContent = '🔒 Mouse Locked to Screen • Move mouse to Look/Aim • Press [ESC] to Unlock';
+          clearTimeout(window._mouseToastTimer);
+          window._mouseToastTimer = setTimeout(() => {
+            if (toast) toast.style.display = 'none';
+          }, 3500);
+        } else {
+          toast.style.display = 'none';
+        }
+      }
+
+      // 4. Mini-Radar Quick Button
+      const radarBtn = document.getElementById('btnRadarMouseLock');
+      if (radarBtn) {
+        radarBtn.textContent = isLocked ? '🔒' : '🖱️';
+        radarBtn.style.color = isLocked ? 'var(--color-cyan)' : '';
+        radarBtn.style.borderColor = isLocked ? 'var(--color-cyan)' : '';
+      }
+
+      // 5. Header Control Button
+      const topBtn = document.getElementById('btnMouseLookToggle');
+      if (topBtn) {
+        topBtn.textContent = isLocked ? '🔒 Mouse Look: LOCKED [ESC]' : '🖱️ Mouse Look: OFF [U]';
+        topBtn.style.color = isLocked ? 'var(--color-cyan)' : '';
+      }
+
+      // 6. Chronicle Log
+      if (window.gameEngine) {
+        if (isLocked) {
+          window.gameEngine.addLog('🔒 Mouse locked on screen! Move mouse to look around & aim.', 'cyan');
+        } else {
+          window.gameEngine.addLog('🔓 Mouse unlocked from screen.', 'dim');
+        }
       }
     });
 
@@ -236,25 +293,17 @@ class Engine3D {
   }
 
   toggleMouseLook() {
-    this.mouseLookActive = !this.mouseLookActive;
-    const dom = this.renderer?.domElement;
-    if (this.mouseLookActive && dom) {
-      dom.requestPointerLock?.();
-    } else if (document.exitPointerLock) {
-      document.exitPointerLock();
+    if (typeof window.toggleMouseLockOnScreen === 'function') {
+      window.toggleMouseLockOnScreen();
+    } else {
+      const dom = this.renderer?.domElement;
+      if (document.pointerLockElement === dom) {
+        document.exitPointerLock?.();
+      } else {
+        dom?.requestPointerLock?.();
+      }
     }
-    const btn = document.getElementById('btnMouseLookToggle');
-    if (btn) {
-      btn.textContent = this.mouseLookActive ? '🖱️ Mouse Look: ON [U]' : '🖱️ Mouse Look: OFF [U]';
-      btn.style.color = this.mouseLookActive ? 'var(--color-cyan)' : '';
-    }
-    window.gameEngine?.addLog(
-      this.mouseLookActive 
-        ? '🖱️ Mouse Look ENABLED: Mouse movement aims/turns. Right-Click drag orbits. Wheel zooms.' 
-        : '🖱️ Mouse Look DISABLED: Standard cursor mode.',
-      'gold'
-    );
-    return this.mouseLookActive;
+    return this.isPointerLocked;
   }
 
   resetCameraOrbit() {

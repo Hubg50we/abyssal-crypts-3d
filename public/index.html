@@ -42,11 +42,32 @@
     <section class="canvas-wrapper" id="canvasContainer">
       <canvas id="gameCanvas"></canvas>
 
-      <!-- Floating In-Game Camera Toggle Button (Top-Left of 3D Canvas) -->
-      <div class="hud-camera-pill" id="hudCameraPill" onclick="window.toggleCameraMode()" title="Click to Cycle Camera View: Action RPG -> 3rd Person -> 1st Person (or press V). Right-Drag to Orbit, Scroll to Zoom.">
-        <span class="camera-icon">🎥</span>
-        <span id="hudCameraText">Camera: Action RPG 3D</span>
-        <span class="camera-hotkey-badge">V</span>
+      <!-- Floating In-Game On-Screen Quick Bar (Top-Left of 3D Canvas) -->
+      <div class="hud-topleft-controls">
+        <!-- In-Game Camera Switcher -->
+        <div class="hud-control-pill hud-camera-pill" id="hudCameraPill" onclick="window.toggleCameraMode()" title="Click to Cycle Camera View: Action RPG -> 3rd Person -> 1st Person (Hotkey: V). Right-Drag to Orbit, Scroll to Zoom.">
+          <span class="pill-icon camera-icon">🎥</span>
+          <span id="hudCameraText">Camera: Action RPG 3D</span>
+          <span class="pill-hotkey camera-hotkey-badge">V</span>
+        </div>
+
+        <!-- In-Game On-Screen Mouse Lock Toggle Button -->
+        <div class="hud-control-pill mouselock-pill" id="hudMouseLockPill" onclick="window.toggleMouseLockOnScreen()" title="Click to Lock / Unlock Mouse on Screen (Hotkey: U)">
+          <span class="pill-icon" id="hudMouseLockIcon">🖱️</span>
+          <span id="hudMouseLockText">Mouse Lock: OFF</span>
+          <span class="pill-hotkey">U</span>
+        </div>
+      </div>
+
+      <!-- On-Screen Center Crosshair Reticle for Mouse Lock Aiming -->
+      <div class="hud-aim-reticle" id="hudAimReticle" style="display: none;">
+        <div class="reticle-dot"></div>
+        <div class="reticle-ring"></div>
+      </div>
+
+      <!-- On-Screen Mouse Lock Toast Banner -->
+      <div class="hud-mouselock-toast" id="hudMouseLockToast" style="display: none;">
+        🔒 Mouse Locked to Screen • Move mouse to Look/Aim • Press [ESC] to Unlock
       </div>
 
       <!-- 2026 Modern In-Game Floating HUD Holographic Radar (Top-Right) -->
@@ -66,6 +87,7 @@
           <!-- Quick Micro Controls -->
           <div class="radar-quick-controls">
             <button class="radar-btn" id="btnRadarCamera" title="Switch 3D Camera Mode [V]" onclick="window.toggleCameraMode()">🎥</button>
+            <button class="radar-btn" id="btnRadarMouseLock" title="Lock / Unlock Mouse on Screen [U]" onclick="window.toggleMouseLockOnScreen()">🖱️</button>
             <button class="radar-btn" id="btnRadarZoomIn" title="Zoom In [+]" onclick="window.modernMap?.zoomRadar(0.3)">+</button>
             <button class="radar-btn" id="btnRadarZoomOut" title="Zoom Out [-]" onclick="window.modernMap?.zoomRadar(-0.3)">−</button>
             <button class="radar-btn" id="btnRadarExpand" title="Expand Full Tactical Map [M]" onclick="window.modernMap?.toggleTacticalModal()">🗺</button>
@@ -518,6 +540,31 @@
 
         window.gameEngine?.addLog(`🎥 Camera Mode switched to ${modeName} 3D.`, 'cyan');
         return mode;
+      }
+    };
+
+    window.toggleMouseLockOnScreen = function() {
+      const dom = window.engine3D?.renderer?.domElement;
+      if (!dom) return;
+
+      const isCurrentlyLocked = (document.pointerLockElement === dom);
+
+      if (isCurrentlyLocked) {
+        if (document.exitPointerLock) {
+          document.exitPointerLock();
+        }
+      } else {
+        if (window.engine3D) {
+          window.engine3D.mouseLookActive = true;
+        }
+        try {
+          const req = dom.requestPointerLock();
+          if (req && req.catch) {
+            req.catch(err => console.warn('Pointer lock request error:', err));
+          }
+        } catch (err) {
+          console.warn('Pointer lock error:', err);
+        }
       }
     };
 
