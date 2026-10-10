@@ -1,9 +1,9 @@
 # ========================================================
-# 🚀 1-Click Hugging Face Spaces 24/7 Cloud Deployment Script
+# 1-Click Hugging Face Spaces 24/7 Cloud Deployment Script
 # ========================================================
 
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host " ⚔ THE ABYSSAL CRYPTS 3D - 24/7 CLOUD DEPLOYMENT" -ForegroundColor Yellow
+Write-Host "  THE ABYSSAL CRYPTS 3D - 24/7 CLOUD DEPLOYMENT" -ForegroundColor Yellow
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "This script will push your game directly to Hugging Face Spaces" -ForegroundColor Green
@@ -46,7 +46,7 @@ git push space main --force
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""
     Write-Host "==========================================================" -ForegroundColor Green
-    Write-Host " 🎉 SUCCESS! DEPLOYMENT INITIATED!" -ForegroundColor Green
+    Write-Host " SUCCESS! DEPLOYMENT INITIATED!" -ForegroundColor Green
     Write-Host "==========================================================" -ForegroundColor Green
     Write-Host "Hugging Face is building your 24/7 game container now."
     Write-Host ""
