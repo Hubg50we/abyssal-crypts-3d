@@ -1,11 +1,17 @@
 FROM python:3.11-slim
 
-WORKDIR /app
+# Create standard non-root user for Hugging Face Spaces container environment
+RUN useradd -m -u 1000 user
+USER user
+ENV HOME=/home/user \
+    PATH=/home/user/.local/bin:$PATH
 
-# Copy project files
-COPY . /app
+WORKDIR /home/user/app
 
-# Cloud providers dynamically set PORT environment variable
+# Copy application files with proper ownership
+COPY --chown=user:user . /home/user/app
+
+# Port configuration (HF Spaces routes traffic to app_port 8000)
 ENV PORT=8000
 EXPOSE 8000
 

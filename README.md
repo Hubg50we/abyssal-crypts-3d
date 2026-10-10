@@ -1,3 +1,13 @@
+---
+title: The Abyssal Crypts 3D
+emoji: 🗡️
+colorFrom: purple
+colorTo: blue
+sdk: docker
+app_port: 8000
+pinned: false
+---
+
 # ⚔ The Abyssal Crypts 3D — Modern Three.js & Python Roguelike
 
 A full-featured **3D** dungeon crawler powered by a Python backend and a WebGL Three.js 3D rendering engine. Built with modern 2026 smooth 3D controls, camera-relative movement pacing, full 360° mouse-look, tactical turn-based combat, dynamic lighting, and synthesized 16-bit retro audio.
@@ -21,19 +31,9 @@ A full-featured **3D** dungeon crawler powered by a Python backend and a WebGL T
 
 ---
 
-## 🚀 How to Run
+## 🌐 24/7 Cloud Hosting (Online Even With PC Off)
 
-1. Open your terminal in the game directory:
-   ```bash
-   cd "C:\Users\Administrator\.gemini\antigravity-ide\scratch\retro-dungeon-crawler"
-   ```
-
-2. Start the Python server:
-   ```bash
-   python server.py
-   ```
-
-3. Open your browser:
-   ```
-   http://localhost:8000
-   ```
+This repository is configured for 24/7 continuous hosting on **Hugging Face Spaces**:
+- **SDK**: Docker
+- **Port**: 8000
+- **Uptime**: 24/7 Continuous (runs independently in the cloud)
