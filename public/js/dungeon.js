@@ -163,7 +163,7 @@ class DungeonManager {
     }
   }
 
-  // --- Fallback procedural generator (if offline) ---
+  // --- Complete procedural generator (runs 100% in-browser offline or online) ---
 
   generateFallbackDungeon() {
     const tiles = Array.from({ length: this.height }, () => Array(this.width).fill(2));
@@ -177,7 +177,6 @@ class DungeonManager {
       const rx = Math.floor(Math.random() * (this.width - rw - 3)) + 1;
       const ry = Math.floor(Math.random() * (this.height - rh - 3)) + 1;
 
-      // Overlap check
       let overlaps = false;
       for (const room of rooms) {
         if (rx <= room.x + room.w && rx + rw >= room.x && ry <= room.y + room.h && ry + rh >= room.y) {
@@ -195,7 +194,7 @@ class DungeonManager {
       rooms.push({ x: rx, y: ry, w: rw, h: rh });
     }
 
-    // Connect rooms
+    // Connect rooms with corridors
     for (let i = 0; i < rooms.length - 1; i++) {
       const r1 = rooms[i];
       const r2 = rooms[i + 1];
@@ -220,6 +219,138 @@ class DungeonManager {
     const stairs = { x: last.x + Math.floor(last.w / 2), y: last.y + Math.floor(last.h / 2) };
     tiles[stairs.y][stairs.x] = 5;
 
+    // Torches & Traps
+    const torches = [];
+    const traps = [];
+    for (const room of rooms) {
+      if (Math.random() < 0.75) {
+        torches.push({ x: room.x + 1, y: room.y });
+      }
+      if (Math.random() < 0.5 && room !== first) {
+        const tx = room.x + Math.floor(room.w / 2);
+        const ty = room.y + Math.floor(room.h / 2);
+        traps.push({ x: tx, y: ty, damage: 12 + this.floor * 4, triggered: false });
+        tiles[ty][tx] = 8;
+      }
+    }
+
+    // Monster generation & floor scaling
+    const monsters = [];
+    let monsterId = 1;
+
+    // Floor 4 Boss
+    if (this.floor >= 4) {
+      monsters.push({
+        id: 'boss_malakor',
+        x: stairs.x - 1,
+        y: stairs.y,
+        type: 'boss',
+        name: 'Malakor, Obsidian Arch-Lich',
+        hp: 160 + this.floor * 30,
+        max_hp: 160 + this.floor * 30,
+        atk: 22 + this.floor * 3,
+        def: 8,
+        xp: 350,
+        icon: 'boss',
+        color: '#e84118',
+        boss: true
+      });
+    }
+
+    const monsterTypes = [
+      { type: 'skeleton', name: 'Skeleton Warrior', hp: 24, atk: 8, def: 2, xp: 20, icon: 'skeleton', color: '#f5f6fa' },
+      { type: 'goblin', name: 'Goblin Sneak', hp: 16, atk: 7, def: 1, xp: 16, icon: 'goblin', color: '#4cd137' },
+      { type: 'goblin_archer', name: 'Goblin Archer', hp: 18, atk: 9, def: 1, xp: 24, icon: 'archer', color: '#44bd32', ranged: true },
+      { type: 'orc', name: 'Orc Berserker', hp: 38, atk: 14, def: 4, xp: 45, icon: 'orc', color: '#e1b12c' },
+      { type: 'spectre', name: 'Shadow Phantom', hp: 28, atk: 12, def: 2, xp: 35, icon: 'spectre', color: '#9c88ff' },
+      { type: 'necromancer', name: 'Bone Weaver Necromancer', hp: 34, atk: 13, def: 3, xp: 55, icon: 'necro', color: '#8c7ae6', caster: true }
+    ];
+
+    for (const room of rooms.slice(1)) {
+      const count = Math.floor(Math.random() * (2 + Math.min(2, this.floor))) + 1;
+      for (let c = 0; c < count; c++) {
+        const t = monsterTypes[Math.floor(Math.random() * monsterTypes.length)];
+        const mx = room.x + Math.floor(Math.random() * (room.w - 2)) + 1;
+        const my = room.y + Math.floor(Math.random() * (room.h - 2)) + 1;
+        if (mx === stairs.x && my === stairs.y) continue;
+        if (monsters.some(m => m.x === mx && m.y === my)) continue;
+
+        const scale = 1.0 + (this.floor - 1) * 0.25;
+        monsters.push({
+          id: `m_${monsterId++}`,
+          x: mx,
+          y: my,
+          type: t.type,
+          name: t.name,
+          hp: Math.floor(t.hp * scale),
+          max_hp: Math.floor(t.hp * scale),
+          atk: Math.floor(t.atk * scale),
+          def: t.def,
+          xp: Math.floor(t.xp * scale),
+          icon: t.icon,
+          color: t.color,
+          ranged: !!t.ranged,
+          caster: !!t.caster
+        });
+      }
+    }
+
+    // Loot Items & Equipment
+    const items = [];
+    let itemId = 1;
+    const possibleItems = [
+      { type: 'potion_health', name: 'Crimson Health Potion', heal: 35, icon: 'potion_red', desc: 'Restores 35 Health points' },
+      { type: 'potion_mana', name: 'Azure Mana Draught', mana: 30, icon: 'potion_blue', desc: 'Restores 30 Mana or Energy' },
+      { type: 'scroll_fireball', name: 'Scroll of Hellfire', damage: 45, icon: 'scroll_fire', desc: 'Blasts target enemy with fire' },
+      { type: 'scroll_teleport', name: 'Scroll of Astral Shift', icon: 'scroll_teleport', desc: 'Teleports you to a safe tile in another room' },
+      { type: 'weapon', name: 'Runic Longsword', atk_bonus: 5 + this.floor * 2, slot: 'weapon', icon: 'sword', desc: 'Sharp enchanted blade (+ATK)' },
+      { type: 'weapon', name: 'Shadow Dagger of Venom', atk_bonus: 4 + this.floor * 2, crit_bonus: 15, slot: 'weapon', icon: 'dagger', desc: 'Fast lethal dagger (+Crit)' },
+      { type: 'weapon', name: 'Staff of Arcane Echoes', atk_bonus: 6 + this.floor * 2, mana_bonus: 20, slot: 'weapon', icon: 'staff', desc: 'Channeled mage catalyst (+ATK, +Mana)' },
+      { type: 'armor', name: 'Iron Plate Cuirass', def_bonus: 3 + this.floor, slot: 'armor', icon: 'armor', desc: 'Sturdy forged iron armor (+DEF)' },
+      { type: 'armor', name: 'Cloak of Evasion', def_bonus: 2 + this.floor, dodge_bonus: 12, slot: 'armor', icon: 'cloak', desc: 'Silken shadowy mantle (+Dodge)' },
+      { type: 'relic', name: 'Amulet of Blood Pact', vampirism: 15, slot: 'relic', icon: 'amulet', desc: 'Leeches 15% life from melee strikes' },
+      { type: 'gold', name: 'Heavy Gold Pouch', gold: (Math.floor(Math.random() * 45) + 25) * this.floor, icon: 'gold', desc: 'Shining dungeon coins' }
+    ];
+
+    for (const room of rooms.slice(1)) {
+      if (Math.random() < 0.8) {
+        const ix = room.x + Math.floor(Math.random() * (room.w - 2)) + 1;
+        const iy = room.y + Math.floor(Math.random() * (room.h - 2)) + 1;
+        if (ix === stairs.x && iy === stairs.y) continue;
+        if (items.some(i => i.x === ix && i.y === iy)) continue;
+
+        const choice = Object.assign({}, possibleItems[Math.floor(Math.random() * possibleItems.length)]);
+        choice.id = `item_${itemId++}`;
+        choice.x = ix;
+        choice.y = iy;
+        if (Math.random() < 0.35) choice.in_chest = true;
+        items.push(choice);
+      }
+    }
+
+    // Shrines
+    const shrines = [];
+    const shrineTypes = [
+      { type: 'health', name: 'Shrine of Vitality', effect: 'Restores full health and increases max HP by 10', icon: 'shrine_red', color: '#e84118' },
+      { type: 'mana', name: 'Shrine of the Arcane Well', effect: 'Restores full mana and boosts magic power', icon: 'shrine_blue', color: '#00a8ff' },
+      { type: 'fury', name: 'Altar of the Berserker', effect: 'Grants +4 permanent Attack bonus', icon: 'shrine_gold', color: '#fbc531' }
+    ];
+    if (rooms.length > 2 && Math.random() < 0.7) {
+      const sRoom = rooms[Math.floor(Math.random() * (rooms.length - 2)) + 1];
+      const sType = shrineTypes[Math.floor(Math.random() * shrineTypes.length)];
+      shrines.push({
+        id: 'shrine_1',
+        x: sRoom.x + Math.floor(sRoom.w / 2),
+        y: sRoom.y + Math.floor(sRoom.h / 2),
+        type: sType.type,
+        name: sType.name,
+        effect: sType.effect,
+        icon: sType.icon,
+        color: sType.color,
+        used: false
+      });
+    }
+
     return {
       seed: Math.floor(Math.random() * 888888),
       floor: this.floor,
@@ -227,20 +358,17 @@ class DungeonManager {
       height: this.height,
       tiles: tiles,
       rooms: rooms,
-      torches: [],
-      traps: [],
+      torches: torches,
+      traps: traps,
       spawn: spawn,
       stairs: stairs,
-      monsters: [
-        { id: 'm_1', x: spawn.x + 3, y: spawn.y, type: 'skeleton', name: 'Skeleton Guard', hp: 20, max_hp: 20, atk: 6, def: 2, xp: 15, icon: 'skeleton', color: '#fff' }
-      ],
-      items: [
-        { id: 'item_1', x: spawn.x + 2, y: spawn.y, type: 'potion_health', name: 'Health Potion', heal: 30, icon: 'potion_red', desc: 'Restores 30 HP' }
-      ],
-      shrines: []
+      monsters: monsters,
+      items: items,
+      shrines: shrines
     };
   }
 }
+
 
 // Global dungeon manager instance
 window.dungeonManager = new DungeonManager(48, 32);

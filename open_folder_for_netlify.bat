@@ -1,0 +1,3 @@
+@echo off
+echo Opening game web folder for Netlify / Vercel drag-and-drop...
+explorer.exe "%~dp0public"
