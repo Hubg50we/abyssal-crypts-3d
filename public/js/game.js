@@ -65,7 +65,8 @@ class GameEngine {
         relic: null,
         abilities: [
           { id: 'cleave', name: 'Whirlwind [Q]', cost: 18, desc: '360° cleave hitting all adjacent foes for 150% ATK' },
-          { id: 'bash', name: 'Shield Bash [E]', cost: 14, desc: 'Stuns target in front, deals 140% ATK with heavy knockback' }
+          { id: 'bash', name: 'Shield Bash [E]', cost: 14, desc: 'Stuns target in front, deals 140% ATK with heavy knockback' },
+          { id: 'battlecry', name: 'War Cry [R]', cost: 20, desc: 'Terrifying shout stuns all nearby foes and grants +50% ATK for 6s' }
         ]
       },
       Mage: {
@@ -86,7 +87,19 @@ class GameEngine {
         relic: null,
         abilities: [
           { id: 'shadow_strike', name: 'Shadow Dash [Q]', cost: 18, desc: 'Rapid forward strike with 200% lethal Critical strike' },
-          { id: 'poison_dart', name: 'Poison Dart [E]', cost: 15, desc: 'Throws toxic dart dealing immediate and lingering poison' }
+          { id: 'poison_dart', name: 'Poison Dart [E]', cost: 15, desc: 'Throws toxic dart dealing immediate and lingering poison' },
+          { id: 'fan_of_knives', name: 'Fan of Knives [R]', cost: 22, desc: 'Unleashes a flurry of spinning daggers in all directions' }
+        ]
+      },
+      Paladin: {
+        hp: 130, max_hp: 130, mana: 70, max_mana: 70, atk: 14, def: 6, crit: 12, dodge: 8, speed: 4.7,
+        weapon: { name: 'Blessed Sunhammer', atk_bonus: 6, icon: 'hammer', desc: 'Consecrated hammer glowing with sacred fire' },
+        armor: { name: 'Aegis Plate', def_bonus: 5, icon: 'armor', desc: 'Blessed gilded steel plates' },
+        relic: null,
+        abilities: [
+          { id: 'smite', name: 'Holy Smite [Q]', cost: 16, desc: 'Calls down radiant divine bolt dealing 180% ATK damage' },
+          { id: 'holy_radiance', name: 'Holy Radiance [E]', cost: 24, desc: 'Burst of sacred light heals 35 HP and damages adjacent foes' },
+          { id: 'aegis', name: 'Aegis of Dawn [R]', cost: 22, desc: 'Summons holy barrier reducing all damage by 50% for 6s' }
         ]
       }
     };
@@ -126,7 +139,9 @@ class GameEngine {
       y: 0,
       angle: 0, // facing in radians
       radius: 0.42, // collision sphere radius
-      attackCooldown: 0
+      attackCooldown: 0,
+      aegisBuffDuration: 0,
+      battlecryBuffDuration: 0
     };
 
     if (window.engine3D) {
@@ -214,9 +229,15 @@ class GameEngine {
     // 1. Process Continuous WASD Movement with Wall Sliding Physics
     this.handlePlayerMovement(dt, u);
 
-    // 2. Decrement Player Attack Cooldown
+    // 2. Decrement Player Attack Cooldown & Buff Durations
     if (this.player.attackCooldown > 0) {
       this.player.attackCooldown -= dt;
+    }
+    if (this.player.aegisBuffDuration > 0) {
+      this.player.aegisBuffDuration -= dt;
+    }
+    if (this.player.battlecryBuffDuration > 0) {
+      this.player.battlecryBuffDuration -= dt;
     }
 
     // 3. Passive Mana Regen (2 MP/sec)
@@ -558,7 +579,10 @@ class GameEngine {
 
     const armDef = (this.player.armor?.def_bonus || 0);
     const totalDef = this.player.base_def + armDef;
-    const rawDmg = Math.max(2, Math.round(m.atk * (0.85 + Math.random() * 0.3) - totalDef * 0.5));
+    let rawDmg = Math.max(2, Math.round(m.atk * (0.85 + Math.random() * 0.3) - totalDef * 0.5));
+    if (this.player.aegisBuffDuration > 0) {
+      rawDmg = Math.max(1, Math.round(rawDmg * 0.5));
+    }
 
     this.player.hp = Math.max(0, this.player.hp - rawDmg);
 
@@ -661,8 +685,9 @@ class GameEngine {
 
     const isCrit = Math.random() * 100 < this.player.crit;
     const critMult = isCrit ? 2.0 : (1.0 + Math.random() * 0.25 - 0.12);
+    const buffMult = (this.player.battlecryBuffDuration > 0) ? 1.5 : 1.0;
 
-    const dmg = Math.max(1, Math.round((baseAtk * critMult) - (m.def * 0.4)));
+    const dmg = Math.max(1, Math.round((baseAtk * critMult * buffMult) - (m.def * 0.4)));
 
     m.hp = Math.max(0, m.hp - dmg);
 
@@ -979,6 +1004,155 @@ class GameEngine {
         }
         break;
       }
+
+      case 'battlecry': {
+        // Warrior: War Cry [R]
+        if (window.engine3D) {
+          window.engine3D.spawnBattlecryShockwave(px, 1.0, pz);
+        }
+        try {
+          if (window.gameAudio) {
+            if (typeof window.gameAudio.playBattlecry === 'function') window.gameAudio.playBattlecry();
+            else window.gameAudio.playAttack();
+          }
+        } catch (_) {}
+
+        this.player.battlecryBuffDuration = 6.0;
+        if (window.engine3D) {
+          window.engine3D.spawnDamagePopup(px, 0, pz, 'WAR CRY! +50% ATK', '#ff4757');
+        }
+
+        let stunCount = 0;
+        for (let i = window.dungeonManager.monsters.length - 1; i >= 0; i--) {
+          const m = window.dungeonManager.monsters[i];
+          if (!m || m.isDead || m.hp <= 0) continue;
+          if (Math.hypot(m.worldX - px, m.worldZ - pz) <= 4.2) {
+            this.damageMonster(m, i);
+            m.attackCooldown = 1.8; // stun
+            stunCount++;
+          }
+        }
+        this.addLog(`War Cry staggered ${stunCount} enemies! +50% ATK for 6s!`, 'gold');
+        break;
+      }
+
+      case 'fan_of_knives': {
+        // Rogue: Fan of Knives [R]
+        if (window.engine3D) {
+          window.engine3D.spawnFanOfKnivesBlades(px, 1.0, pz);
+        }
+        try {
+          if (window.gameAudio) {
+            if (typeof window.gameAudio.playFanOfKnives === 'function') window.gameAudio.playFanOfKnives();
+            else window.gameAudio.playAttack();
+          }
+        } catch (_) {}
+
+        let bladeHits = 0;
+        for (let i = window.dungeonManager.monsters.length - 1; i >= 0; i--) {
+          const m = window.dungeonManager.monsters[i];
+          if (!m || m.isDead || m.hp <= 0) continue;
+          if (Math.hypot(m.worldX - px, m.worldZ - pz) <= 4.0) {
+            this.damageMonster(m, i);
+            bladeHits++;
+          }
+        }
+        this.addLog(`Fan of Knives pierced ${bladeHits} enemies in all directions!`, 'cyan');
+        break;
+      }
+
+      case 'smite': {
+        // Paladin: Holy Smite [Q]
+        let target = null;
+        let minDist = 10;
+        for (const m of window.dungeonManager.monsters) {
+          if (!m || m.isDead || m.hp <= 0) continue;
+          const d = Math.hypot(m.worldX - px, m.worldZ - pz);
+          if (d < minDist) {
+            minDist = d;
+            target = m;
+          }
+        }
+
+        if (target) {
+          if (window.engine3D) {
+            window.engine3D.spawnHolySmite(target.worldX, 1.0, target.worldZ);
+          }
+          try {
+            if (window.gameAudio) {
+              if (typeof window.gameAudio.playHoly === 'function') window.gameAudio.playHoly();
+              else window.gameAudio.playSpell();
+            }
+          } catch (_) {}
+
+          const idx = window.dungeonManager.monsters.indexOf(target);
+          if (idx !== -1 && target.hp > 0 && !target.isDead) {
+            this.damageMonster(target, idx);
+          }
+          this.addLog(`Holy Smite brought sacred judgment upon ${target.name}!`, 'gold');
+        } else {
+          const tx = px - Math.sin(this.player.angle) * 3.0;
+          const tz = pz - Math.cos(this.player.angle) * 3.0;
+          if (window.engine3D) {
+            window.engine3D.spawnHolySmite(tx, 1.0, tz);
+          }
+          try { if (window.gameAudio?.playHoly) window.gameAudio.playHoly(); } catch (_) {}
+          this.addLog("Holy Smite called down radiant light!", 'gold');
+        }
+        break;
+      }
+
+      case 'holy_radiance': {
+        // Paladin: Holy Radiance [E] (AoE heal + damage)
+        if (window.engine3D) {
+          window.engine3D.spawnHolyRadiance(px, 0.4, pz);
+        }
+        try {
+          if (window.gameAudio) {
+            if (typeof window.gameAudio.playDivine === 'function') window.gameAudio.playDivine();
+            else window.gameAudio.playPotion();
+          }
+        } catch (_) {}
+
+        const healAmt = 35;
+        this.player.hp = Math.min(this.player.max_hp, this.player.hp + healAmt);
+        if (window.engine3D) {
+          window.engine3D.spawnDamagePopup(px, 0, pz, `+${healAmt} HP`, '#2ed573');
+        }
+
+        let scorched = 0;
+        for (let i = window.dungeonManager.monsters.length - 1; i >= 0; i--) {
+          const m = window.dungeonManager.monsters[i];
+          if (!m || m.isDead || m.hp <= 0) continue;
+          if (Math.hypot(m.worldX - px, m.worldZ - pz) <= 3.6) {
+            this.damageMonster(m, i);
+            scorched++;
+          }
+        }
+        this.updateHUD();
+        this.addLog(`Holy Radiance restored ${healAmt} HP and scorched ${scorched} nearby foes!`, 'green');
+        break;
+      }
+
+      case 'aegis': {
+        // Paladin: Aegis of Dawn [R] (50% damage reduction barrier for 6s)
+        if (window.engine3D) {
+          window.engine3D.spawnAegisShield(px, 1.1, pz);
+        }
+        try {
+          if (window.gameAudio) {
+            if (typeof window.gameAudio.playAegis === 'function') window.gameAudio.playAegis();
+            else window.gameAudio.playSpell();
+          }
+        } catch (_) {}
+
+        this.player.aegisBuffDuration = 6.0;
+        if (window.engine3D) {
+          window.engine3D.spawnDamagePopup(px, 0, pz, 'AEGIS BARRIER!', '#f1c40f');
+        }
+        this.addLog("Aegis of Dawn manifests! Absorbing 50% damage for 6 seconds!", 'gold');
+        break;
+      }
     }
   }
 
@@ -1221,11 +1395,17 @@ class GameEngine {
       const abilityIcons = {
         cleave: '🌪️',
         bash: '🛡️',
+        battlecry: '📢',
         missile: '✨',
         meteor: '☄️',
         blink: '🌌',
         shadow_strike: '🗡️',
-        poison_blade: '🧪'
+        poison_blade: '🧪',
+        poison_dart: '🎯',
+        fan_of_knives: '⚔️',
+        smite: '⚡',
+        holy_radiance: '✨',
+        aegis: '🛡️'
       };
 
       skillSlots.forEach(s => {
@@ -1283,6 +1463,45 @@ class GameEngine {
     this.renderInventoryUI();
     this.renderEquipmentUI();
     this.renderAbilitiesUI();
+
+    // Cinematic Boss Health Bar tracking
+    const bossContainer = document.getElementById('hudBossBarContainer');
+    if (bossContainer) {
+      let activeBoss = null;
+      let minBossDist = 18.0;
+      if (window.dungeonManager && window.dungeonManager.monsters) {
+        const px = this.player.worldX;
+        const pz = this.player.worldZ;
+        for (const m of window.dungeonManager.monsters) {
+          if (!m || m.isDead || m.hp <= 0) continue;
+          const isBossOrElite = m.isBoss || m.type === 'archlich' || m.type === 'boss' ||
+            (m.name && (m.name.includes('Lich') || m.name.includes('Abomination') || m.name.includes('Golem') || m.name.includes('Stalker'))) ||
+            m.hp >= 70;
+          if (isBossOrElite) {
+            const d = Math.hypot(m.worldX - px, m.worldZ - pz);
+            if (d < minBossDist) {
+              minBossDist = d;
+              activeBoss = m;
+            }
+          }
+        }
+      }
+
+      if (activeBoss) {
+        bossContainer.style.display = 'block';
+        const bossNameEl = document.getElementById('hudBossName');
+        const bossHpTextEl = document.getElementById('hudBossHpText');
+        const bossFillEl = document.getElementById('hudBossFill');
+        const maxHp = activeBoss.maxHp || activeBoss.max_hp || activeBoss.hp;
+        const pct = Math.max(0, Math.min(100, Math.round((activeBoss.hp / maxHp) * 100)));
+
+        if (bossNameEl) bossNameEl.textContent = activeBoss.name;
+        if (bossHpTextEl) bossHpTextEl.textContent = `${activeBoss.hp} / ${maxHp}`;
+        if (bossFillEl) bossFillEl.style.width = `${pct}%`;
+      } else {
+        bossContainer.style.display = 'none';
+      }
+    }
   }
 
   renderInventoryUI() {

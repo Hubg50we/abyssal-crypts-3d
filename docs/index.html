@@ -84,6 +84,18 @@
         🔒 Mouse Locked to Screen • Move mouse to Look/Aim • Press [ESC] to Unlock
       </div>
 
+      <!-- Cinematic Boss Encounter Health Bar (Appears when near Boss/Elite) -->
+      <div class="hud-boss-bar-container" id="hudBossBarContainer" style="display: none;">
+        <div class="hud-boss-header">
+          <span class="hud-boss-skull">💀</span>
+          <span class="hud-boss-name" id="hudBossName">Dungeon Tyrant</span>
+          <span class="hud-boss-hp-text" id="hudBossHpText">100 / 100</span>
+        </div>
+        <div class="hud-boss-track">
+          <div class="hud-boss-fill" id="hudBossFill" style="width: 100%;"></div>
+        </div>
+      </div>
+
       <!-- 2026 Modern In-Game Floating HUD Holographic Radar (Top-Right) -->
       <div class="hud-radar-container" id="hudRadarContainer">
         <div class="radar-card">
@@ -392,6 +404,12 @@
         <div class="class-name">Rogue</div>
         <div class="class-perk">High evasion, 200% lethal critical strikes, and lingering poison darts.</div>
       </div>
+
+      <div class="class-card" onclick="selectClass('Paladin')">
+        <div class="class-icon">✨</div>
+        <div class="class-name">Paladin</div>
+        <div class="class-perk">Golden armor, Holy Smite radiant bolts, healing Holy Radiance & Aegis barrier.</div>
+      </div>
     </div>
 
     <button class="btn-primary" onclick="selectClass('Warrior')">ENTER THE 3D DUNGEON AS WARRIOR</button>
@@ -501,6 +519,11 @@
         <br>• Press <kbd>M</kbd> or click <strong>🗺 Map [M]</strong>: Open the <strong>Tactical Reconnaissance Scanner</strong> with full subterranean topography, zoom/pan controls, exploration progress, and live telemetry!
         <br>• <strong>In-Game Circular Radar HUD</strong>: Floating glassmorphic radar in the top-right corner with 360° radar sweep, player vision cone, compass bearing, pulsing enemy blips, and loot markers.
         <br>• Use <kbd>+</kbd> / <kbd>−</kbd> on the radar or tactical map to adjust zoom scale.
+      </p>
+      <p style="margin-bottom: 12px;"><strong>Skills & Ultimate Spells:</strong>
+        <br>• <kbd>Q</kbd> / <kbd>E</kbd>: Cast Primary & Secondary class skills (e.g. Whirlwind, Meteor, Holy Smite).
+        <br>• <kbd>R</kbd>: Unleash your <strong>Ultimate Ability</strong> (Warrior: War Cry, Mage: Astral Shift, Rogue: Fan of Knives, Paladin: Aegis of Dawn).
+        <br>• <kbd>1</kbd>–<kbd>6</kbd>: Instantly consume health potions, mana draughts, and scrolls from quick inventory.
       </p>
       <p><strong>Goal:</strong> Delve down through Floor 1 to Floor 4 and defeat Malakor the Arch-Lich!</p>
     </div>

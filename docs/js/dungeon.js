@@ -268,7 +268,10 @@ class DungeonManager {
       { type: 'chaos_elemental', name: 'Chaos Core Elemental', hp: 44, atk: 16, def: 4, xp: 70, icon: 'elemental', color: '#ff793f', caster: true },
       { type: 'frost_revenant', name: 'Glacial Frost Revenant', hp: 54, atk: 20, def: 6, xp: 85, icon: 'revenant', color: '#00d2d3' },
       { type: 'void_drake', name: 'Void Nether Drake', hp: 50, atk: 19, def: 5, xp: 80, icon: 'void_drake', color: '#9b59b6', ranged: true, flying: true },
-      { type: 'behemoth', name: 'Abyssal Titan Behemoth', hp: 76, atk: 25, def: 7, xp: 125, icon: 'behemoth', color: '#e67e22', elite: true }
+      { type: 'behemoth', name: 'Abyssal Titan Behemoth', hp: 76, atk: 25, def: 7, xp: 125, icon: 'behemoth', color: '#e67e22', elite: true },
+      { type: 'bog_abomination', name: 'Catacomb Bog Lurker', hp: 48, atk: 15, def: 5, xp: 75, icon: 'bog_abomination', color: '#2ed573' },
+      { type: 'magma_golem', name: 'Basalt Magma Golem', hp: 65, atk: 22, def: 8, xp: 110, icon: 'magma_golem', color: '#e74c3c', elite: true },
+      { type: 'void_stalker', name: 'Astral Void Stalker', hp: 58, atk: 24, def: 5, xp: 120, icon: 'void_stalker', color: '#9b59b6', ranged: true }
     ];
 
     for (const room of rooms.slice(1)) {

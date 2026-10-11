@@ -449,9 +449,22 @@ class DungeonGenerator:
             {"type": "behemoth", "name": "Abyssal Titan Behemoth", "hp": 76, "atk": 25, "def": 7, "xp": 125, "icon": "behemoth", "color": "#e67e22", "elite": True}
         ]
 
+        if self.floor >= 2:
+            monster_types.append({
+                "type": "bog_abomination", "name": "Catacomb Bog Lurker", "hp": 48, "atk": 15, "def": 5, "xp": 75, "icon": "bog_abomination", "color": "#2ed573"
+            })
+
         if self.floor >= 3:
             monster_types.append({
                 "type": "necromancer", "name": "Bone Necromancer", "hp": 45, "atk": 12, "def": 3, "xp": 65, "icon": "necromancer", "color": "#8c7ae6", "caster": True
+            })
+            monster_types.append({
+                "type": "magma_golem", "name": "Volcanic Magma Golem", "hp": 60, "atk": 21, "def": 7, "xp": 95, "icon": "magma_golem", "color": "#ff4757"
+            })
+
+        if self.floor >= 4:
+            monster_types.append({
+                "type": "void_stalker", "name": "Astral Void Stalker", "hp": 52, "atk": 23, "def": 4, "xp": 90, "icon": "void_stalker", "color": "#a55eea", "flying": True
             })
 
         # Final floor boss

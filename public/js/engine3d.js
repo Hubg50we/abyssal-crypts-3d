@@ -511,6 +511,23 @@ class Engine3D {
       daggerGroup.rotation.x = -Math.PI / 2;
       this.heroWeaponContainer.add(daggerGroup);
       this.heroWeaponMesh = daggerGroup;
+    } else if (heroClass === 'Paladin') {
+      // Blessed Sunhammer
+      const hammerGroup = new THREE.Group();
+      const headMat = new THREE.MeshStandardMaterial({ color: 0xf1c40f, metalness: 0.85, roughness: 0.2 });
+      const hammerHead = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.16, 0.18), headMat);
+      hammerHead.position.y = 0.42;
+      hammerGroup.add(hammerHead);
+
+      const shaftMat = new THREE.MeshStandardMaterial({ color: 0xdfe4ea, metalness: 0.7, roughness: 0.3 });
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.75, 8), shaftMat);
+      shaft.position.y = 0.12;
+      hammerGroup.add(shaft);
+
+      hammerGroup.position.set(0.08, -0.38, -0.2);
+      hammerGroup.rotation.x = -Math.PI / 2;
+      this.heroWeaponContainer.add(hammerGroup);
+      this.heroWeaponMesh = hammerGroup;
     } else {
       // Tempered Steel Broadsword
       const sword = this.buildMiniSword();
@@ -576,6 +593,26 @@ class Engine3D {
         this.heroOffhandMesh.material.color.setHex(0x2ed573);
       }
       this.buildClassWeapon('Rogue');
+    } else if (heroClass === 'Paladin') {
+      if (this.heroTorsoMesh) {
+        this.heroTorsoMesh.material.color.setHex(0xdfe4ea);
+        this.heroTorsoMesh.material.metalness = 0.95;
+        this.heroTorsoMesh.material.roughness = 0.15;
+      }
+      if (this.heroHeadMesh) this.heroHeadMesh.material.color.setHex(0xf1c40f);
+      if (this.heroVisorMesh) this.heroVisorMesh.material.color.setHex(0xffffff);
+      if (this.heroCrestMesh) {
+        this.heroCrestMesh.visible = true;
+        this.heroCrestMesh.material.color.setHex(0xf39c12);
+      }
+      if (this.heroHatMesh) this.heroHatMesh.visible = false;
+      if (this.heroShieldMesh) {
+        this.heroShieldMesh.visible = true;
+        this.heroShieldMesh.material.color.setHex(0xf1c40f);
+        this.heroShieldMesh.material.metalness = 0.9;
+      }
+      if (this.heroOffhandMesh) this.heroOffhandMesh.visible = false;
+      this.buildClassWeapon('Paladin');
     } else {
       if (this.heroTorsoMesh) {
         this.heroTorsoMesh.material.color.setHex(0x4b6584);
@@ -711,14 +748,31 @@ class Engine3D {
     const w = dungeonData.width;
     const h = dungeonData.height;
     const u = this.unitSize;
+    const floor = dungeonData.floor || 1;
 
-    const wallTex = window.gameTextures3D.getWallTexture();
-    const floorTex = window.gameTextures3D.getFloorTexture();
-    const ceilTex = window.gameTextures3D.getCeilingTexture();
-    const doorTex = window.gameTextures3D.getDoorTexture();
+    // Apply Biome Atmosphere (Lighting, Fog & Materials)
+    const biome = window.gameTextures3D ? window.gameTextures3D.getBiome(floor) : {
+      name: 'The Obsidian Crypts',
+      fogColor: 0x07090e,
+      ambientColor: 0x2d3748,
+      torchColor: 0xffaa22,
+      torchLightColor: 0xff7722,
+      wallRoughness: 0.85,
+      floorRoughness: 0.75
+    };
 
-    const wallMat = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.85, metalness: 0.1 });
-    const floorMat = new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.75, metalness: 0.15 });
+    if (this.scene) {
+      if (this.scene.background) this.scene.background.setHex(biome.fogColor);
+      if (this.scene.fog) this.scene.fog.color.setHex(biome.fogColor);
+    }
+
+    const wallTex = window.gameTextures3D.getWallTexture(floor);
+    const floorTex = window.gameTextures3D.getFloorTexture(floor);
+    const ceilTex = window.gameTextures3D.getCeilingTexture(floor);
+    const doorTex = window.gameTextures3D.getDoorTexture(floor);
+
+    const wallMat = new THREE.MeshStandardMaterial({ map: wallTex, roughness: biome.wallRoughness || 0.85, metalness: 0.1 });
+    const floorMat = new THREE.MeshStandardMaterial({ map: floorTex, roughness: biome.floorRoughness || 0.75, metalness: 0.15 });
     const ceilMat = new THREE.MeshStandardMaterial({ map: ceilTex, roughness: 0.9, metalness: 0.05 });
     const doorMat = new THREE.MeshStandardMaterial({ map: doorTex, roughness: 0.7, metalness: 0.3 });
 
@@ -784,7 +838,7 @@ class Engine3D {
 
     // Torches
     for (const torch of dungeonData.torches) {
-      this.create3DTorch(torch.x * u, torch.y * u);
+      this.create3DTorch(torch.x * u, torch.y * u, biome);
     }
 
     // Shrines
@@ -793,21 +847,24 @@ class Engine3D {
     }
   }
 
-  create3DTorch(wx, wz) {
+  create3DTorch(wx, wz, biome) {
     const sconceMat = new THREE.MeshStandardMaterial({ color: 0x3d3d3d, metalness: 0.8 });
     const sconce = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.05, 0.5, 8), sconceMat);
     sconce.position.set(wx, 1.8, wz);
     this.scene.add(sconce);
     this.dungeonMeshes.push(sconce);
 
-    const flameMat = new THREE.MeshBasicMaterial({ color: 0xffaa22 });
+    const flameColor = biome?.torchColor || 0xffaa22;
+    const lightColor = biome?.torchLightColor || 0xff7722;
+
+    const flameMat = new THREE.MeshBasicMaterial({ color: flameColor });
     const flame = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), flameMat);
     flame.position.set(wx, 2.05, wz);
     this.scene.add(flame);
     this.dungeonMeshes.push(flame);
 
     // Only create 1 pointlight per torch and manage intensity dynamically
-    const torchLight = new THREE.PointLight(0xff7722, 0, 7, 2);
+    const torchLight = new THREE.PointLight(lightColor, 0, 7, 2);
     torchLight.position.set(wx, 2.1, wz);
     this.scene.add(torchLight);
 
@@ -1391,6 +1448,119 @@ class Engine3D {
       progress: 0,
       color: color
     });
+  }
+
+  spawnHolySmite(targetX, targetY, targetZ) {
+    // Descending vertical golden ray of light + sunflare burst
+    const beamGeo = new THREE.CylinderGeometry(0.18, 0.45, 6, 12);
+    const beamMat = new THREE.MeshBasicMaterial({
+      color: 0xfffa65,
+      transparent: true,
+      opacity: 0.9,
+      blending: THREE.AdditiveBlending
+    });
+    const beam = new THREE.Mesh(beamGeo, beamMat);
+    beam.position.set(targetX, 3, targetZ);
+    this.scene.add(beam);
+    this.slashMeshes.push({ mesh: beam, life: 0.35, maxLife: 0.35 });
+
+    // Golden radiant sun burst
+    this.spawnParticleExplosion(targetX, 1.2, targetZ, 0xf1c40f, 32);
+    this.spawnParticleExplosion(targetX, 1.5, targetZ, 0xffffff, 16);
+    this.cameraShakeTime = 0.22;
+    this.cameraShakeIntensity = 0.12;
+  }
+
+  spawnHolyRadiance(x, y, z) {
+    // Expanding celestial golden shockwave ring
+    const ringGeo = new THREE.RingGeometry(0.8, 3.8, 24);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0xf1c40f,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending
+    });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.set(x, 0.4, z);
+    this.scene.add(ring);
+    this.slashMeshes.push({ mesh: ring, life: 0.4, maxLife: 0.4 });
+
+    // Healing motes drifting up
+    for (let i = 0; i < 20; i++) {
+      const p = new THREE.Mesh(
+        new THREE.SphereGeometry(0.09, 6, 6),
+        new THREE.MeshBasicMaterial({ color: 0x2ed573 })
+      );
+      const angle = Math.random() * Math.PI * 2;
+      const dist = Math.random() * 2.8;
+      p.position.set(x + Math.cos(angle) * dist, 0.3, z + Math.sin(angle) * dist);
+      p.userData = { vx: 0, vy: 2.2 + Math.random() * 1.5, vz: 0, life: 0.7 };
+      this.scene.add(p);
+      this.particles3D.push(p);
+    }
+  }
+
+  spawnBattlecryShockwave(x, y, z) {
+    // Heavy Crimson-Gold Shockwave Ring
+    const ringGeo = new THREE.RingGeometry(0.6, 4.2, 32);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0xff4757,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.9,
+      blending: THREE.AdditiveBlending
+    });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.set(x, 0.5, z);
+    this.scene.add(ring);
+    this.slashMeshes.push({ mesh: ring, life: 0.35, maxLife: 0.35 });
+
+    this.spawnParticleExplosion(x, 1.0, z, 0xff793f, 36);
+    this.cameraShakeTime = 0.35;
+    this.cameraShakeIntensity = 0.18;
+  }
+
+  spawnFanOfKnivesBlades(x, y, z) {
+    // 8 razor blades flying outwards in 360 degrees
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const bladeGeo = new THREE.BoxGeometry(0.08, 0.04, 0.45);
+      const bladeMat = new THREE.MeshBasicMaterial({ color: 0xced6e0 });
+      const blade = new THREE.Mesh(bladeGeo, bladeMat);
+      blade.position.set(x, 1.0, z);
+      blade.rotation.y = angle;
+
+      const speed = 7.5;
+      blade.userData = {
+        vx: Math.cos(angle) * speed,
+        vy: 0.2,
+        vz: Math.sin(angle) * speed,
+        life: 0.3
+      };
+      this.scene.add(blade);
+      this.particles3D.push(blade);
+    }
+    this.spawnParticleExplosion(x, 1.0, z, 0x2ed573, 16);
+  }
+
+  spawnAegisShield(x, y, z) {
+    // Celestial golden protective sphere around hero
+    const shieldGeo = new THREE.IcosahedronGeometry(1.4, 2);
+    const shieldMat = new THREE.MeshBasicMaterial({
+      color: 0xf1c40f,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.75,
+      blending: THREE.AdditiveBlending
+    });
+    const shieldMesh = new THREE.Mesh(shieldGeo, shieldMat);
+    shieldMesh.position.set(x, 1.1, z);
+    this.scene.add(shieldMesh);
+    this.slashMeshes.push({ mesh: shieldMesh, life: 0.6, maxLife: 0.6 });
+    this.spawnParticleExplosion(x, 1.1, z, 0xfffa65, 20);
   }
 
   // --- Real-Time Render Loop ---

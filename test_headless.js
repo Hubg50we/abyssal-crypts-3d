@@ -444,11 +444,11 @@ class HeadlessTester {
 
   testClassStatsAndProgression() {
     console.log('\n--- 4. Testing Character Classes & Level Progression ---');
-    const classes = ['Warrior', 'Mage', 'Rogue'];
+    const classes = ['Warrior', 'Mage', 'Rogue', 'Paladin'];
 
     for (const c of classes) {
-      let hp = c === 'Warrior' ? 120 : (c === 'Mage' ? 85 : 95);
-      let mana = c === 'Warrior' ? 60 : (c === 'Mage' ? 120 : 80);
+      let hp = c === 'Warrior' ? 120 : (c === 'Mage' ? 85 : (c === 'Paladin' ? 130 : 95));
+      let mana = c === 'Warrior' ? 60 : (c === 'Mage' ? 120 : (c === 'Paladin' ? 70 : 80));
       let level = 1;
       let xp = 0;
       let next_xp = 50;
@@ -513,6 +513,10 @@ class HeadlessTester {
     this.assert(audioCode.includes('playFireball()'), 'audio.js implements playFireball() alias');
     this.assert(audioCode.includes('playPotion()'), 'audio.js implements playPotion() alias');
     this.assert(audioCode.includes('playGold()'), 'audio.js implements playGold() alias');
+    this.assert(audioCode.includes('playHoly('), 'audio.js implements playHoly()');
+    this.assert(audioCode.includes('playBattlecry('), 'audio.js implements playBattlecry()');
+    this.assert(audioCode.includes('playAegis('), 'audio.js implements playAegis()');
+    this.assert(audioCode.includes('playBossEncounter('), 'audio.js implements playBossEncounter()');
 
     // 2. Mocking Game, Dungeon, and 3D Engine for Death Mechanics
     const mockMonster1 = { id: 'm_skeleton_1', name: 'Skeleton Guard', hp: 20, max_hp: 20, xp: 18, worldX: 10, worldZ: 10 };

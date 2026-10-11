@@ -348,6 +348,128 @@ class SoundEngine {
     this.playCoin();
   }
 
+  playHoly() {
+    if (!this.sfxEnabled) return;
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + i * 0.05);
+      gain.gain.setValueAtTime(0.25 * this.masterVolume, now + i * 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.05 + 0.4);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now + i * 0.05);
+      osc.stop(now + i * 0.05 + 0.42);
+    });
+  }
+
+  playDivine() {
+    this.playHoly();
+  }
+
+  playRoar() {
+    if (!this.sfxEnabled) return;
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(80, now);
+    osc.frequency.linearRampToValueAtTime(140, now + 0.12);
+    osc.frequency.exponentialRampToValueAtTime(45, now + 0.45);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(400, now);
+    filter.frequency.linearRampToValueAtTime(900, now + 0.15);
+    filter.frequency.exponentialRampToValueAtTime(200, now + 0.45);
+
+    gain.gain.setValueAtTime(0.4 * this.masterVolume, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.48);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.5);
+  }
+
+  playBattlecry() {
+    this.playRoar();
+  }
+
+  playFanOfKnives() {
+    if (!this.sfxEnabled) return;
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    for (let k = 0; k < 4; k++) {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(800 + Math.random() * 400, now + k * 0.04);
+      osc.frequency.exponentialRampToValueAtTime(200, now + k * 0.04 + 0.08);
+
+      gain.gain.setValueAtTime(0.2 * this.masterVolume, now + k * 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + k * 0.04 + 0.08);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now + k * 0.04);
+      osc.stop(now + k * 0.04 + 0.09);
+    }
+  }
+
+  playAegis() {
+    if (!this.sfxEnabled) return;
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, now);
+    osc.frequency.exponentialRampToValueAtTime(880, now + 0.35);
+
+    gain.gain.setValueAtTime(0.3 * this.masterVolume, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.42);
+  }
+
+  playShield() {
+    this.playAegis();
+  }
+
+  playBossEncounter() {
+    if (!this.sfxEnabled) return;
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(65, now);
+    osc.frequency.exponentialRampToValueAtTime(32, now + 0.6);
+
+    gain.gain.setValueAtTime(0.45 * this.masterVolume, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.7);
+  }
+
   playTrap() {
     if (!this.sfxEnabled) return;
     this.init();

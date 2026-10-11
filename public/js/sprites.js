@@ -32,6 +32,7 @@ class SpriteGenerator {
     this.cache['hero_warrior'] = this.renderWarrior();
     this.cache['hero_mage'] = this.renderMage();
     this.cache['hero_rogue'] = this.renderRogue();
+    this.cache['hero_paladin'] = this.renderPaladin();
 
     // Monsters
     this.cache['m_skeleton'] = this.renderSkeleton();
@@ -46,6 +47,9 @@ class SpriteGenerator {
     this.cache['m_frost_revenant'] = this.renderFrostRevenant();
     this.cache['m_blood_fiend'] = this.renderBloodFiend();
     this.cache['m_behemoth'] = this.renderBehemoth();
+    this.cache['m_bog_abomination'] = this.renderBogAbomination();
+    this.cache['m_magma_golem'] = this.renderMagmaGolem();
+    this.cache['m_void_stalker'] = this.renderVoidStalker();
 
     // Interactive & Items
     this.cache['chest_closed'] = this.renderChest(false);
@@ -332,6 +336,56 @@ class SpriteGenerator {
     ctx.fillStyle = '#ffa502';
     ctx.fillRect(5, 20, 4, 2);
     ctx.fillRect(23, 20, 4, 2);
+    return canvas;
+  }
+
+  renderPaladin() {
+    const { canvas, ctx } = this.createCanvas();
+    const s = this.tileSize;
+    // Radiant Holy Crusader
+    // Golden Cloak
+    ctx.fillStyle = '#f39c12';
+    ctx.fillRect(7, 10, 18, 18);
+
+    // Polished Silver & Gold Armor
+    ctx.fillStyle = '#ecf0f1';
+    ctx.fillRect(10, 11, 12, 12);
+    ctx.fillStyle = '#f1c40f';
+    ctx.fillRect(11, 11, 10, 3);
+    ctx.fillRect(15, 14, 2, 8);
+    ctx.fillRect(12, 16, 8, 2);
+
+    // Golden Helm & Divine Halo
+    ctx.fillStyle = '#bdc3c7';
+    ctx.fillRect(10, 4, 12, 8);
+    // Radiant Golden Halo
+    ctx.fillStyle = '#f1c40f';
+    ctx.fillRect(11, 1, 10, 2);
+    ctx.fillRect(10, 2, 2, 3);
+    ctx.fillRect(20, 2, 2, 3);
+
+    // Glowing Golden Visor Eyes
+    ctx.fillStyle = '#f39c12';
+    ctx.fillRect(12, 7, 8, 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(14, 7, 4, 2);
+
+    // Blessed Sunhammer (Right Hand)
+    ctx.fillStyle = '#f1c40f';
+    ctx.fillRect(22, 6, 8, 6);
+    ctx.fillStyle = '#e67e22';
+    ctx.fillRect(24, 7, 4, 4);
+    ctx.fillStyle = '#7f8c8d';
+    ctx.fillRect(25, 12, 2, 12);
+
+    // Radiant Gold Shield (Left Hand)
+    ctx.fillStyle = '#f1c40f';
+    ctx.fillRect(3, 11, 6, 12);
+    ctx.fillStyle = '#ecf0f1';
+    ctx.fillRect(4, 13, 4, 8);
+    ctx.fillStyle = '#e74c3c';
+    ctx.fillRect(5, 15, 2, 4);
+
     return canvas;
   }
 
@@ -687,6 +741,93 @@ class SpriteGenerator {
     ctx.fillStyle = '#f1c40f';
     ctx.fillRect(12, 8, 1, 1);
     ctx.fillRect(19, 8, 1, 1);
+    return canvas;
+  }
+
+  renderBogAbomination() {
+    const { canvas, ctx } = this.createCanvas();
+    // Sunken Moss & Fungus Lurker (Floor 2 Biome Monster)
+    ctx.fillStyle = '#1e3725';
+    ctx.fillRect(5, 6, 22, 22);
+
+    // Overgrown Moss & Mold
+    ctx.fillStyle = '#27ae60';
+    ctx.fillRect(7, 8, 18, 18);
+    ctx.fillStyle = '#2ed573';
+    ctx.fillRect(9, 10, 14, 10);
+
+    // Glowing Bioluminescent Fungal Eyes & Spores
+    ctx.fillStyle = '#00f5d4';
+    ctx.fillRect(10, 11, 3, 3);
+    ctx.fillRect(19, 11, 3, 3);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(11, 12, 1, 1);
+    ctx.fillRect(20, 12, 1, 1);
+
+    // Spore Tendrils
+    ctx.fillStyle = '#10ac84';
+    ctx.fillRect(4, 14, 3, 10);
+    ctx.fillRect(25, 14, 3, 10);
+    ctx.fillRect(8, 24, 4, 6);
+    ctx.fillRect(20, 24, 4, 6);
+    return canvas;
+  }
+
+  renderMagmaGolem() {
+    const { canvas, ctx } = this.createCanvas();
+    // Molten Lava Golem (Floor 3 Biome Monster)
+    ctx.fillStyle = '#1a0d0d';
+    ctx.fillRect(4, 5, 24, 23);
+
+    // Scorched Basalt Plates
+    ctx.fillStyle = '#2d1818';
+    ctx.fillRect(6, 7, 20, 19);
+
+    // Glowing Molten Lava Veins
+    ctx.fillStyle = '#ff4757';
+    ctx.fillRect(8, 10, 4, 12);
+    ctx.fillRect(16, 12, 5, 8);
+    ctx.fillRect(10, 16, 12, 3);
+    ctx.fillStyle = '#ffa502';
+    ctx.fillRect(9, 11, 2, 8);
+    ctx.fillRect(17, 13, 3, 4);
+
+    // Incandescent Core Eyes
+    ctx.fillStyle = '#fffa65';
+    ctx.fillRect(10, 8, 3, 2);
+    ctx.fillRect(19, 8, 3, 2);
+    return canvas;
+  }
+
+  renderVoidStalker() {
+    const { canvas, ctx } = this.createCanvas();
+    // Astral Void Phantom Predator (Floor 4 Biome Monster)
+    ctx.fillStyle = 'rgba(75, 0, 130, 0.4)';
+    ctx.fillRect(3, 3, 26, 26);
+
+    // Ethereal Shadow Carapace
+    ctx.fillStyle = '#2d134d';
+    ctx.fillRect(8, 6, 16, 20);
+
+    // Celestial Cosmic Glyphs
+    ctx.fillStyle = '#a55eea';
+    ctx.fillRect(10, 8, 12, 14);
+    ctx.fillStyle = '#70a1ff';
+    ctx.fillRect(11, 12, 10, 2);
+    ctx.fillRect(15, 10, 2, 8);
+
+    // Piercing Starlight Cyan Eyes
+    ctx.fillStyle = '#00d2d3';
+    ctx.fillRect(11, 8, 2, 2);
+    ctx.fillRect(19, 8, 2, 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(12, 9, 1, 1);
+    ctx.fillRect(19, 9, 1, 1);
+
+    // Bladed Astral Claws
+    ctx.fillStyle = '#00cec9';
+    ctx.fillRect(4, 12, 3, 10);
+    ctx.fillRect(25, 12, 3, 10);
     return canvas;
   }
 
