@@ -18,16 +18,15 @@ A full-featured **3D** dungeon crawler powered by a Python backend and a WebGL T
 
 | Input | Action | Description |
 | :--- | :--- | :--- |
-| <kbd>W</kbd> | **Forward** | Smooth, paced step in the direction you are facing |
-| <kbd>S</kbd> | **Backward** | Smooth retreat without spinning |
-| <kbd>A</kbd> / <kbd>D</kbd> | **Turn Left / Right** | 90° smooth turn (or strafe in Strafe mode) |
-| <kbd>Q</kbd> / <kbd>E</kbd> | **Turn Left / Right** | Dedicated smooth 90° pivots |
-| <kbd>Z</kbd> / <kbd>C</kbd> | **Strafe** | Sidestep left / right |
-| **Mouse Click** | **360° Mouse Look** | Click canvas to lock cursor and look around smoothly in 360° (<kbd>Esc</kbd> to unlock) |
-| <kbd>F</kbd> or **Left Click** | **Attack In Front** | Swing 3D weapon at target directly in front of you |
-| `⚡ Pacing` Button | **Speed Modes** | Cycle between *Normal (220ms)*, *Tactical / Slow (340ms)*, and *Brisk (160ms)* |
-| <kbd>V</kbd> | **Toggle 1st / 3rd Person** | Switch between First-Person and Third-Person 3D views |
-| <kbd>Space</kbd> | **Rest** | Wait 1 turn to recharge Mana |
+| <kbd>W</kbd> | **Forward** | Real-time continuous forward motion with zero keyboard delay (0ms) |
+| <kbd>S</kbd> | **Backward** | Smooth retreat without camera spinning |
+| <kbd>A</kbd> / <kbd>D</kbd> | **Strafe / Turn** | Responsive lateral strafe or smooth 360° turn |
+| <kbd>Q</kbd> / <kbd>E</kbd> / <kbd>R</kbd> | **Abilities** | Instant cast class spells (Arcane Bolt, Whirlwind, Dash, Meteor) |
+| **Mouse Click** / <kbd>U</kbd> | **360° Mouse Look** | Lock cursor to aim & look around smoothly in 360° (<kbd>Esc</kbd> to unlock) |
+| <kbd>F</kbd> / **Left Click** / <kbd>Space</kbd> | **Attack In Front** | Instant zero-delay 3D melee strike with particle arc FX |
+| `⚡ Pacing` Button | **Speed Modes** | **Zero Delay (0ms Instant)** — Cycle between *Zero Delay (0ms)*, *Turbo Hyper (0ms)*, and *Agile* with 0ms keyboard latency |
+| <kbd>V</kbd> | **Toggle 3D Camera** | Switch between Action RPG, Over-the-Shoulder, and First-Person 3D views |
+| <kbd>M</kbd> | **Tactical Map Scanner** | Fullscreen holographic radar with live entity telemetry |
 
 ---
 

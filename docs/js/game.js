@@ -17,8 +17,10 @@ class GameEngine {
     this.player = null;
     this.combatLog = [];
 
-    // Real-Time Keyboard Input State
+    // Real-Time Keyboard Input State (Zero Delay)
     this.keysDown = new Set();
+    this.pacingMode = 'ZERO_DELAY';
+    this.attackCooldownDuration = 0.08;
 
     // Step audio throttle timer
     this.stepAudioTimer = 0;
@@ -27,6 +29,28 @@ class GameEngine {
     this.controlMode = 'STRAFE';
 
     this.initEventListeners();
+  }
+
+  isKeyDown(...keys) {
+    for (const k of keys) {
+      if (this.keysDown.has(k) || this.keysDown.has(k.toLowerCase())) return true;
+    }
+    return false;
+  }
+
+  setPacing(mode = 'ZERO_DELAY') {
+    this.pacingMode = mode;
+    if (!this.player) return;
+    if (mode === 'ZERO_DELAY') {
+      this.player.speed = 6.2;
+      this.attackCooldownDuration = 0.06;
+    } else if (mode === 'TURBO') {
+      this.player.speed = 7.6;
+      this.attackCooldownDuration = 0.03;
+    } else {
+      this.player.speed = 5.0;
+      this.attackCooldownDuration = 0.15;
+    }
   }
 
   // --- Hero Class Setup ---
@@ -221,11 +245,11 @@ class GameEngine {
     const isTurnMode = (this.controlMode === 'TURN');
     const viewMode = window.engine3D ? window.engine3D.viewMode : 'ACTION_RPG';
 
-    // Forward / Back (W / S / Up / Down)
-    if (this.keysDown.has('w') || this.keysDown.has('W') || this.keysDown.has('ArrowUp')) {
+    // Forward / Back (W / S / Up / Down) - Instant Zero Delay
+    if (this.isKeyDown('w', 'ArrowUp', 'KeyW')) {
       inputZ -= 1;
     }
-    if (this.keysDown.has('s') || this.keysDown.has('S') || this.keysDown.has('ArrowDown')) {
+    if (this.isKeyDown('s', 'ArrowDown', 'KeyS')) {
       inputZ += 1;
     }
 
@@ -233,48 +257,40 @@ class GameEngine {
       // In Isometric Action RPG View:
       // A / Left -> Move Left (-X)
       // D / Right -> Move Right (+X)
-      if (this.keysDown.has('a') || this.keysDown.has('A') || this.keysDown.has('ArrowLeft')) {
+      if (this.isKeyDown('a', 'ArrowLeft', 'KeyA')) {
         inputX -= 1;
       }
-      if (this.keysDown.has('d') || this.keysDown.has('D') || this.keysDown.has('ArrowRight')) {
+      if (this.isKeyDown('d', 'ArrowRight', 'KeyD')) {
         inputX += 1;
       }
     } else {
       // In Over-Shoulder or First-Person View:
       if (isTurnMode) {
         // TURN MODE:
-        // A / ArrowLeft -> Turn Left smoothly (increasing angle)
-        // D / ArrowRight -> Turn Right smoothly (decreasing angle)
-        // Q -> Strafe Left
-        // E -> Strafe Right
-        if (this.keysDown.has('a') || this.keysDown.has('A') || this.keysDown.has('ArrowLeft')) {
+        if (this.isKeyDown('a', 'ArrowLeft', 'KeyA')) {
           this.player.angle += dt * 3.2;
         }
-        if (this.keysDown.has('d') || this.keysDown.has('D') || this.keysDown.has('ArrowRight')) {
+        if (this.isKeyDown('d', 'ArrowRight', 'KeyD')) {
           this.player.angle -= dt * 3.2;
         }
-        if (this.keysDown.has('q') || this.keysDown.has('Q')) {
+        if (this.isKeyDown('q', 'KeyQ')) {
           inputX -= 1;
         }
-        if (this.keysDown.has('e') || this.keysDown.has('E')) {
+        if (this.isKeyDown('e', 'KeyE')) {
           inputX += 1;
         }
       } else {
-        // STRAFE MODE (Standard modern FPS / Action):
-        // A -> Strafe Left
-        // D -> Strafe Right
-        // Q / ArrowLeft -> Turn Left smoothly
-        // E / ArrowRight -> Turn Right smoothly
-        if (this.keysDown.has('a') || this.keysDown.has('A')) {
+        // STRAFE MODE:
+        if (this.isKeyDown('a', 'KeyA')) {
           inputX -= 1;
         }
-        if (this.keysDown.has('d') || this.keysDown.has('D')) {
+        if (this.isKeyDown('d', 'KeyD')) {
           inputX += 1;
         }
-        if (this.keysDown.has('q') || this.keysDown.has('Q') || this.keysDown.has('ArrowLeft')) {
+        if (this.isKeyDown('q', 'ArrowLeft', 'KeyQ')) {
           this.player.angle += dt * 3.2;
         }
-        if (this.keysDown.has('e') || this.keysDown.has('E') || this.keysDown.has('ArrowRight')) {
+        if (this.isKeyDown('e', 'ArrowRight', 'KeyE')) {
           this.player.angle -= dt * 3.2;
         }
       }
@@ -548,7 +564,8 @@ class GameEngine {
     if (this.gameState !== 'PLAYING' || !this.player) return;
     if (this.player.attackCooldown > 0) return; // on cooldown
 
-    this.player.attackCooldown = 0.35; // fluid, agile attack pacing
+    const cd = (typeof this.attackCooldownDuration === 'number') ? this.attackCooldownDuration : 0.08;
+    this.player.attackCooldown = cd;
     if (window.multiplayerClient?.isOnline) {
       window.multiplayerClient.broadcastAction('attack');
     }
@@ -1370,6 +1387,8 @@ class GameEngine {
       if (this.gameState !== 'PLAYING') return;
 
       this.keysDown.add(e.key);
+      this.keysDown.add(e.key.toLowerCase());
+      if (e.code) this.keysDown.add(e.code);
 
       // Space or F -> Melee Attack
       if (e.key === ' ' || e.key === 'f' || e.key === 'F') {
@@ -1429,6 +1448,8 @@ class GameEngine {
 
     window.addEventListener('keyup', (e) => {
       this.keysDown.delete(e.key);
+      this.keysDown.delete(e.key.toLowerCase());
+      if (e.code) this.keysDown.delete(e.code);
     });
 
     // Clear keys if window loses focus

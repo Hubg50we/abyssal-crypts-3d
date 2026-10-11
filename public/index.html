@@ -42,7 +42,7 @@
       <div class="btn-group tool-group">
         <button class="icon-btn bot-btn" id="btnAiBotToggle" title="Toggle Autonomous AI Bot Tester">🤖 AI Bot</button>
         <button class="icon-btn test-btn" id="btnAiDiagnostics" title="Run Comprehensive Diagnostics">🧪 Tests</button>
-        <button class="icon-btn" id="btnSpeedToggle" title="Adjust Pacing">🏃 Move</button>
+        <button class="icon-btn" id="btnSpeedToggle" title="⚡ Pacing & Speed: Zero Keyboard Delay (0ms) [Click to Cycle]">⚡ Pacing: 0ms</button>
         <button class="icon-btn" id="btnLeaderboard" title="View High Scores">🏆 Hall</button>
         <button class="icon-btn" id="btnControls" title="How to Play">❓ Help</button>
       </div>
@@ -614,22 +614,25 @@
       if (title) title.showModal();
     }
 
-    const speeds = [
-      { name: 'Agile', speed: 4.8 },
-      { name: 'Sprint', speed: 6.2 },
-      { name: 'Tactical', speed: 3.6 }
+    const pacingModes = [
+      { name: '0ms (Instant)', id: 'ZERO_DELAY', speed: 6.2, label: '⚡ Pacing: 0ms' },
+      { name: 'Turbo Hyper (0ms)', id: 'TURBO', speed: 7.6, label: '⚡ Pacing: Turbo' },
+      { name: 'Agile (Fast)', id: 'AGILE', speed: 5.0, label: '⚡ Pacing: Agile' }
     ];
-    let speedIndex = 0;
+    let pacingIndex = 0;
 
-    document.getElementById('btnSpeedToggle').addEventListener('click', () => {
-      speedIndex = (speedIndex + 1) % speeds.length;
-      const s = speeds[speedIndex];
-      if (window.gameEngine && window.gameEngine.player) {
-        window.gameEngine.player.speed = s.speed;
-      }
-      document.getElementById('btnSpeedToggle').textContent = `🏃 Move: ${s.name}`;
-      window.gameEngine?.addLog(`Movement speed set to: ${s.name} (${s.speed} u/s)`, 'cyan');
-    });
+    const btnSpeed = document.getElementById('btnSpeedToggle');
+    if (btnSpeed) {
+      btnSpeed.addEventListener('click', () => {
+        pacingIndex = (pacingIndex + 1) % pacingModes.length;
+        const p = pacingModes[pacingIndex];
+        if (window.gameEngine) {
+          window.gameEngine.setPacing(p.id);
+        }
+        btnSpeed.textContent = p.label;
+        window.gameEngine?.addLog(`Pacing set to: ${p.name} (Zero Keyboard Latency, ${p.speed} u/s)`, 'cyan');
+      });
+    }
 
     window.toggleCameraMode = function() {
       if (window.engine3D) {
