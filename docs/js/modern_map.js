@@ -234,6 +234,15 @@ class ModernMapSystem {
     };
   }
 
+  snapToPlayer() {
+    const ge = typeof window !== 'undefined' ? window.gameEngine : null;
+    const p = ge?.player;
+    if (!p) return;
+    const u = (typeof window !== 'undefined' && window.engine3D?.unitSize) || 2.0;
+    this.smoothPlayerX = p.worldX / u;
+    this.smoothPlayerZ = p.worldZ / u;
+  }
+
   update(dt) {
     this.radarSweepAngle = (this.radarSweepAngle + dt * 2.2) % (Math.PI * 2);
     this.pulseTime += dt * 3.5;
@@ -245,6 +254,12 @@ class ModernMapSystem {
     const u = (typeof window !== 'undefined' && window.engine3D?.unitSize) || 2.0;
     const targetPx = p.worldX / u;
     const targetPz = p.worldZ / u;
+
+    // Instant snap if starting at zero
+    if (this.smoothPlayerX === 0 && this.smoothPlayerZ === 0 && (targetPx !== 0 || targetPz !== 0)) {
+      this.smoothPlayerX = targetPx;
+      this.smoothPlayerZ = targetPz;
+    }
 
     // Smooth camera lag on radar for fluid motion
     this.smoothPlayerX += (targetPx - this.smoothPlayerX) * Math.min(1.0, dt * 12);
@@ -397,8 +412,8 @@ class ModernMapSystem {
         if (!isExplored) continue;
 
         const isVisible = dm.visible[y]?.[x];
-        const screenX = centerX + (x - px) * tileSize;
-        const screenY = centerY + (y - py) * tileSize;
+        const screenX = centerX + (x - px) * tileSize - tileSize / 2;
+        const screenY = centerY + (y - py) * tileSize - tileSize / 2;
 
         const tile = dm.tiles[y][x];
 
@@ -425,8 +440,8 @@ class ModernMapSystem {
 
     // 3. Render Stairs to Next Floor
     if (dm.stairs && dm.explored[dm.stairs.y]?.[dm.stairs.x]) {
-      const sx = centerX + (dm.stairs.x + 0.5 - px) * tileSize;
-      const sy = centerY + (dm.stairs.y + 0.5 - py) * tileSize;
+      const sx = centerX + (dm.stairs.x - px) * tileSize;
+      const sy = centerY + (dm.stairs.y - py) * tileSize;
 
       const pulse = 4 + Math.sin(this.pulseTime) * 2;
       ctx.fillStyle = '#00f5d4';
@@ -447,8 +462,8 @@ class ModernMapSystem {
     // 4. Render Ground Items & Relics
     for (const it of dm.items) {
       if (!dm.explored[it.y]?.[it.x]) continue;
-      const ix = centerX + (it.x + 0.5 - px) * tileSize;
-      const iy = centerY + (it.y + 0.5 - py) * tileSize;
+      const ix = centerX + (it.x - px) * tileSize;
+      const iy = centerY + (it.y - py) * tileSize;
 
       ctx.fillStyle = '#ffd166';
       ctx.shadowColor = '#ffd166';
@@ -670,14 +685,23 @@ class ModernMapSystem {
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
     }
 
-    // Auto-fit Dungeon to tactical canvas
+    // Auto-fit Dungeon to tactical canvas or center on player when zoomed in
     const margin = 36;
-    const scaleX = (w - margin * 2) / dm.width * this.tacticalZoom;
-    const scaleY = (h - margin * 2) / dm.height * this.tacticalZoom;
-    const scale = Math.min(scaleX, scaleY);
+    const baseScale = Math.min((w - margin * 2) / dm.width, (h - margin * 2) / dm.height);
+    const scale = baseScale * this.tacticalZoom;
 
-    const offsetX = (w - dm.width * scale) / 2;
-    const offsetY = (h - dm.height * scale) / 2;
+    const u = (typeof window !== 'undefined' && window.engine3D?.unitSize) || 2.0;
+    const px = p.worldX / u;
+    const py = p.worldZ / u;
+
+    let offsetX, offsetY;
+    if (this.tacticalZoom > 1.0) {
+      offsetX = w / 2 - px * scale;
+      offsetY = h / 2 - py * scale;
+    } else {
+      offsetX = (w - dm.width * scale) / 2;
+      offsetY = (h - dm.height * scale) / 2;
+    }
 
     // 1. Render Explored Map Architecture
     for (let y = 0; y < dm.height; y++) {
@@ -688,8 +712,8 @@ class ModernMapSystem {
         if (!isExplored) continue;
 
         const tile = dm.tiles[y][x];
-        const tx = offsetX + x * scale;
-        const ty = offsetY + y * scale;
+        const tx = offsetX + (x - 0.5) * scale;
+        const ty = offsetY + (y - 0.5) * scale;
 
         if (tile === 2) {
           // Walls
@@ -719,8 +743,8 @@ class ModernMapSystem {
 
     // 2. Render Stairs Gateway
     if (dm.stairs && dm.explored[dm.stairs.y]?.[dm.stairs.x]) {
-      const sx = offsetX + (dm.stairs.x + 0.5) * scale;
-      const sy = offsetY + (dm.stairs.y + 0.5) * scale;
+      const sx = offsetX + dm.stairs.x * scale;
+      const sy = offsetY + dm.stairs.y * scale;
 
       ctx.fillStyle = '#00f5d4';
       ctx.shadowColor = '#00f5d4';
@@ -744,8 +768,8 @@ class ModernMapSystem {
     // 3. Render Items & Relics
     for (const it of dm.items) {
       if (!dm.explored[it.y]?.[it.x]) continue;
-      const ix = offsetX + (it.x + 0.5) * scale;
-      const iy = offsetY + (it.y + 0.5) * scale;
+      const ix = offsetX + it.x * scale;
+      const iy = offsetY + it.y * scale;
 
       ctx.fillStyle = '#ffd166';
       ctx.shadowColor = '#ffd166';
@@ -757,7 +781,6 @@ class ModernMapSystem {
     }
 
     // 4. Render Active Monsters
-    const u = (typeof window !== 'undefined' && window.engine3D?.unitSize) || 2.0;
     for (const m of dm.monsters) {
       if (m.hp <= 0) continue;
       const gx = m.worldX / u;
@@ -788,8 +811,6 @@ class ModernMapSystem {
     }
 
     // 5. Render Hero Marker & Vision Cone
-    const px = p.worldX / u;
-    const py = p.worldZ / u;
     const screenPx = offsetX + px * scale;
     const screenPy = offsetY + py * scale;
 

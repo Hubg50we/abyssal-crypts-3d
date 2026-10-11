@@ -361,37 +361,45 @@ class Engine3D {
       metalness: 0.8,
       roughness: 0.3
     });
-    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.65, 0.35), torsoMat);
-    torso.position.y = 0.85;
-    torso.castShadow = true;
-    this.heroGroup.add(torso);
+    this.heroTorsoMesh = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.65, 0.35), torsoMat);
+    this.heroTorsoMesh.position.y = 0.85;
+    this.heroTorsoMesh.castShadow = true;
+    this.heroGroup.add(this.heroTorsoMesh);
 
     // Gold belt buckle
     const beltMat = new THREE.MeshStandardMaterial({ color: 0xfbc531, metalness: 0.9, roughness: 0.2 });
-    const belt = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.1, 0.37), beltMat);
-    belt.position.y = 0.55;
-    this.heroGroup.add(belt);
+    this.heroBeltMesh = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.1, 0.37), beltMat);
+    this.heroBeltMesh.position.y = 0.55;
+    this.heroGroup.add(this.heroBeltMesh);
 
-    // 2. Head & Knight Helmet
+    // 2. Head & Knight Helmet / Wizard Cowl
     const helmMat = new THREE.MeshStandardMaterial({ color: 0x778ca3, metalness: 0.85, roughness: 0.25 });
-    const head = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.38, 0.38), helmMat);
-    head.position.y = 1.35;
-    head.castShadow = true;
-    this.heroGroup.add(head);
+    this.heroHeadMesh = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.38, 0.38), helmMat);
+    this.heroHeadMesh.position.y = 1.35;
+    this.heroHeadMesh.castShadow = true;
+    this.heroGroup.add(this.heroHeadMesh);
 
     // Glowing Visor Eyes (facing front: -Z)
     const visorMat = new THREE.MeshBasicMaterial({ color: 0x00d2d3 });
-    const visor = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.08, 0.06), visorMat);
-    visor.position.set(0, 1.35, -0.18);
-    this.heroGroup.add(visor);
+    this.heroVisorMesh = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.08, 0.06), visorMat);
+    this.heroVisorMesh.position.set(0, 1.35, -0.18);
+    this.heroGroup.add(this.heroVisorMesh);
 
-    // Crest on Helmet (extending from front to back)
+    // Crest on Helmet (Warrior helmet plume)
     const crestMat = new THREE.MeshStandardMaterial({ color: 0xff3838, roughness: 0.5 });
-    const crest = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.2, 0.42), crestMat);
-    crest.position.set(0, 1.58, 0.02);
-    this.heroGroup.add(crest);
+    this.heroCrestMesh = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.2, 0.42), crestMat);
+    this.heroCrestMesh.position.set(0, 1.58, 0.02);
+    this.heroGroup.add(this.heroCrestMesh);
 
-    // 3. Left Arm & Shield (Hero's left arm at -X, holding shield forward at -Z)
+    // Mage Wizard Hat / Hood
+    const hatMat = new THREE.MeshStandardMaterial({ color: 0x1e3799, roughness: 0.8 });
+    this.heroHatMesh = new THREE.Mesh(new THREE.ConeGeometry(0.32, 0.55, 8), hatMat);
+    this.heroHatMesh.position.set(0, 1.72, 0);
+    this.heroHatMesh.rotation.x = -0.15;
+    this.heroHatMesh.visible = false;
+    this.heroGroup.add(this.heroHatMesh);
+
+    // 3. Left Arm & Shield / Off-Hand
     const armMat = new THREE.MeshStandardMaterial({ color: 0x4b6584, roughness: 0.4 });
     this.heroLeftArm = new THREE.Group();
     this.heroLeftArm.position.set(-0.36, 1.05, 0);
@@ -402,19 +410,21 @@ class Engine3D {
 
     // Heater Shield (pointing forward at -Z)
     const shieldMat = new THREE.MeshStandardMaterial({ color: 0x2c3e50, metalness: 0.7, roughness: 0.3 });
-    const shield = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.55, 0.4), shieldMat);
-    shield.position.set(-0.12, -0.2, -0.08);
-    shield.castShadow = true;
-    this.heroLeftArm.add(shield);
+    this.heroShieldMesh = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.55, 0.4), shieldMat);
+    this.heroShieldMesh.position.set(-0.12, -0.2, -0.08);
+    this.heroShieldMesh.castShadow = true;
+    this.heroLeftArm.add(this.heroShieldMesh);
 
-    // Shield Gold Emblem
-    const emblem = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.2, 0.2), beltMat);
-    emblem.position.set(-0.12, -0.2, -0.08);
-    this.heroLeftArm.add(emblem);
+    // Off-hand Focus Orb / Stiletto
+    const offhandMat = new THREE.MeshStandardMaterial({ color: 0x00d2d3, emissive: 0x00d2d3, emissiveIntensity: 0.8, roughness: 0.2 });
+    this.heroOffhandMesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.14), offhandMat);
+    this.heroOffhandMesh.position.set(-0.08, -0.35, -0.15);
+    this.heroOffhandMesh.visible = false;
+    this.heroLeftArm.add(this.heroOffhandMesh);
 
     this.heroGroup.add(this.heroLeftArm);
 
-    // 4. Right Arm & Weapon (Hero's right arm at +X, weapon pointing forward at -Z)
+    // 4. Right Arm & Weapon
     this.heroRightArm = new THREE.Group();
     this.heroRightArm.position.set(0.36, 1.05, 0);
 
@@ -422,28 +432,93 @@ class Engine3D {
     rightArmMesh.position.y = -0.22;
     this.heroRightArm.add(rightArmMesh);
 
-    // Weapon (Broadsword pointing forward: -Z)
-    const sword = this.buildMiniSword();
-    sword.position.set(0.08, -0.4, -0.2);
-    sword.rotation.x = -Math.PI / 2;
-    this.heroRightArm.add(sword);
-    this.heroWeaponMesh = sword;
+    this.heroWeaponContainer = new THREE.Group();
+    this.heroRightArm.add(this.heroWeaponContainer);
 
+    this.buildClassWeapon('Warrior');
     this.heroGroup.add(this.heroRightArm);
 
-    // 5. Legs
+    // 5. Articulated Walking Legs (with proper pivot joints for fluid locomotion)
     const legMat = new THREE.MeshStandardMaterial({ color: 0x2c3e50, roughness: 0.5 });
-    const legLeft = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.22), legMat);
-    legLeft.position.set(-0.15, 0.25, 0);
-    legLeft.castShadow = true;
-    this.heroGroup.add(legLeft);
+    
+    this.heroLeftLeg = new THREE.Group();
+    this.heroLeftLeg.position.set(-0.15, 0.5, 0);
+    const leftLegMesh = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.5, 0.2), legMat);
+    leftLegMesh.position.y = -0.25;
+    leftLegMesh.castShadow = true;
+    this.heroLeftLeg.add(leftLegMesh);
+    this.heroGroup.add(this.heroLeftLeg);
 
-    const legRight = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.22), legMat);
-    legRight.position.set(0.15, 0.25, 0);
-    legRight.castShadow = true;
-    this.heroGroup.add(legRight);
+    this.heroRightLeg = new THREE.Group();
+    this.heroRightLeg.position.set(0.15, 0.5, 0);
+    const rightLegMesh = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.5, 0.2), legMat);
+    rightLegMesh.position.y = -0.25;
+    rightLegMesh.castShadow = true;
+    this.heroRightLeg.add(rightLegMesh);
+    this.heroGroup.add(this.heroRightLeg);
 
     this.scene.add(this.heroGroup);
+  }
+
+  buildClassWeapon(heroClass = 'Warrior') {
+    if (!this.heroWeaponContainer) return;
+    while (this.heroWeaponContainer.children.length > 0) {
+      const ch = this.heroWeaponContainer.children[0];
+      this.heroWeaponContainer.remove(ch);
+      this.disposeNode(ch);
+    }
+
+    if (heroClass === 'Mage') {
+      // Arcane Crystal Staff
+      const staffGroup = new THREE.Group();
+      const woodMat = new THREE.MeshStandardMaterial({ color: 0x4a3728, roughness: 0.7 });
+      const staffPole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.4, 8), woodMat);
+      staffPole.position.y = 0.35;
+      staffGroup.add(staffPole);
+
+      const crystalMat = new THREE.MeshStandardMaterial({
+        color: 0x00d2d3,
+        emissive: 0x00d2d3,
+        emissiveIntensity: 0.9,
+        roughness: 0.1
+      });
+      const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(0.16), crystalMat);
+      crystal.position.y = 1.08;
+      staffGroup.add(crystal);
+
+      staffGroup.position.set(0.08, -0.3, -0.25);
+      staffGroup.rotation.x = -Math.PI / 2 + 0.15;
+      this.heroWeaponContainer.add(staffGroup);
+      this.heroWeaponMesh = staffGroup;
+    } else if (heroClass === 'Rogue') {
+      // Poison Shadow Dagger
+      const daggerGroup = new THREE.Group();
+      const bladeMat = new THREE.MeshStandardMaterial({ color: 0x747d8c, metalness: 0.9, roughness: 0.2 });
+      const daggerBlade = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.5, 0.02), bladeMat);
+      daggerBlade.position.y = 0.22;
+      daggerGroup.add(daggerBlade);
+
+      const guardMat = new THREE.MeshStandardMaterial({ color: 0x2ed573, emissive: 0x2ed573, emissiveIntensity: 0.5 });
+      const daggerGuard = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.04, 0.04), guardMat);
+      daggerGroup.add(daggerGuard);
+
+      const gripMat = new THREE.MeshStandardMaterial({ color: 0x2f3542 });
+      const daggerGrip = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.14, 6), gripMat);
+      daggerGrip.position.y = -0.09;
+      daggerGroup.add(daggerGrip);
+
+      daggerGroup.position.set(0.08, -0.35, -0.2);
+      daggerGroup.rotation.x = -Math.PI / 2;
+      this.heroWeaponContainer.add(daggerGroup);
+      this.heroWeaponMesh = daggerGroup;
+    } else {
+      // Tempered Steel Broadsword
+      const sword = this.buildMiniSword();
+      sword.position.set(0.08, -0.4, -0.2);
+      sword.rotation.x = -Math.PI / 2;
+      this.heroWeaponContainer.add(sword);
+      this.heroWeaponMesh = sword;
+    }
   }
 
   buildMiniSword() {
@@ -468,16 +543,52 @@ class Engine3D {
 
   updateHeroClassStyle(heroClass) {
     if (!this.heroGroup) return;
-    // Adapt color scheme per class
-    // warrior = steel & gold, mage = mystic sapphire & purple, rogue = obsidian & crimson
-    if (this.heroWeaponMesh) {
-      if (heroClass === 'Mage') {
-        this.heroWeaponMesh.children[0].material.color.setHex(0x00d2d3);
-      } else if (heroClass === 'Rogue') {
-        this.heroWeaponMesh.children[0].material.color.setHex(0xa4b0be);
-      } else {
-        this.heroWeaponMesh.children[0].material.color.setHex(0xe0e0e0);
+
+    if (heroClass === 'Mage') {
+      if (this.heroTorsoMesh) {
+        this.heroTorsoMesh.material.color.setHex(0x192a56);
+        this.heroTorsoMesh.material.metalness = 0.1;
+        this.heroTorsoMesh.material.roughness = 0.85;
       }
+      if (this.heroHeadMesh) this.heroHeadMesh.material.color.setHex(0x273c75);
+      if (this.heroVisorMesh) this.heroVisorMesh.material.color.setHex(0x00d2d3);
+      if (this.heroCrestMesh) this.heroCrestMesh.visible = false;
+      if (this.heroHatMesh) this.heroHatMesh.visible = true;
+      if (this.heroShieldMesh) this.heroShieldMesh.visible = false;
+      if (this.heroOffhandMesh) {
+        this.heroOffhandMesh.visible = true;
+        this.heroOffhandMesh.material.color.setHex(0x00d2d3);
+      }
+      this.buildClassWeapon('Mage');
+    } else if (heroClass === 'Rogue') {
+      if (this.heroTorsoMesh) {
+        this.heroTorsoMesh.material.color.setHex(0x1e272e);
+        this.heroTorsoMesh.material.metalness = 0.2;
+        this.heroTorsoMesh.material.roughness = 0.7;
+      }
+      if (this.heroHeadMesh) this.heroHeadMesh.material.color.setHex(0x2f3542);
+      if (this.heroVisorMesh) this.heroVisorMesh.material.color.setHex(0x2ed573);
+      if (this.heroCrestMesh) this.heroCrestMesh.visible = false;
+      if (this.heroHatMesh) this.heroHatMesh.visible = false;
+      if (this.heroShieldMesh) this.heroShieldMesh.visible = false;
+      if (this.heroOffhandMesh) {
+        this.heroOffhandMesh.visible = true;
+        this.heroOffhandMesh.material.color.setHex(0x2ed573);
+      }
+      this.buildClassWeapon('Rogue');
+    } else {
+      if (this.heroTorsoMesh) {
+        this.heroTorsoMesh.material.color.setHex(0x4b6584);
+        this.heroTorsoMesh.material.metalness = 0.8;
+        this.heroTorsoMesh.material.roughness = 0.3;
+      }
+      if (this.heroHeadMesh) this.heroHeadMesh.material.color.setHex(0x778ca3);
+      if (this.heroVisorMesh) this.heroVisorMesh.material.color.setHex(0x00d2d3);
+      if (this.heroCrestMesh) this.heroCrestMesh.visible = true;
+      if (this.heroHatMesh) this.heroHatMesh.visible = false;
+      if (this.heroShieldMesh) this.heroShieldMesh.visible = true;
+      if (this.heroOffhandMesh) this.heroOffhandMesh.visible = false;
+      this.buildClassWeapon('Warrior');
     }
   }
 
@@ -1310,10 +1421,18 @@ class Engine3D {
         if (this.heroRightArm && !this.isAttacking) {
           this.heroRightArm.rotation.x = -Math.sin(this.walkAnimTime) * 0.35;
         }
+        if (this.heroLeftLeg) {
+          this.heroLeftLeg.rotation.x = -Math.sin(this.walkAnimTime) * 0.45;
+        }
+        if (this.heroRightLeg) {
+          this.heroRightLeg.rotation.x = Math.sin(this.walkAnimTime) * 0.45;
+        }
       } else {
         this.heroGroup.position.y = 0;
         if (this.heroLeftArm) this.heroLeftArm.rotation.x = 0;
         if (this.heroRightArm && !this.isAttacking) this.heroRightArm.rotation.x = 0;
+        if (this.heroLeftLeg) this.heroLeftLeg.rotation.x = 0;
+        if (this.heroRightLeg) this.heroRightLeg.rotation.x = 0;
       }
 
       // Attack swinging gesture on 3D hero model

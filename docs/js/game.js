@@ -173,7 +173,10 @@ class GameEngine {
 
     this.updateHUD();
     this.renderMinimap();
-    if (window.modernMap) window.modernMap.updateStats();
+    if (window.modernMap) {
+      window.modernMap.snapToPlayer();
+      window.modernMap.updateStats();
+    }
   }
 
   // --- Real-Time Game Loop (Called every frame from engine3d.render) ---
@@ -361,7 +364,11 @@ class GameEngine {
     // Sync positions with Three.js engine
     if (window.engine3D) {
       window.engine3D.playerPos.set(this.player.worldX, 0, this.player.worldZ);
-      const isMouseControlling = !!(window.engine3D.isPointerLocked || document.pointerLockElement || window.engine3D.isMouseDragging);
+      const isMouseControlling = !!(
+        window.engine3D.isPointerLocked ||
+        document.pointerLockElement ||
+        (window.engine3D.isMouseDragging && window.engine3D.viewMode !== 'ACTION_RPG')
+      );
       if (isMouseControlling) {
         // Pointer lock or right-click drag is actively rotating the hero via mouse
         this.player.angle = window.engine3D.playerAngle;
@@ -565,6 +572,28 @@ class GameEngine {
     const pz = this.player.worldZ;
     const reach = 2.4; // Melee reach
     const viewMode = window.engine3D ? window.engine3D.viewMode : 'ACTION_RPG';
+
+    // Auto-face towards nearest target in reach when attacking in Action RPG mode
+    if (viewMode === 'ACTION_RPG') {
+      let nearestFoe = null;
+      let nearestDist = reach;
+      for (const m of window.dungeonManager.monsters) {
+        if (!m || m.isDead || m.hp <= 0) continue;
+        const d = Math.hypot(m.worldX - px, m.worldZ - pz);
+        if (d <= nearestDist) {
+          nearestDist = d;
+          nearestFoe = m;
+        }
+      }
+      if (nearestFoe) {
+        const dx = nearestFoe.worldX - px;
+        const dz = nearestFoe.worldZ - pz;
+        this.player.angle = Math.atan2(-dx, -dz);
+        if (window.engine3D) {
+          window.engine3D.playerAngle = this.player.angle;
+        }
+      }
+    }
 
     let hits = 0;
 
