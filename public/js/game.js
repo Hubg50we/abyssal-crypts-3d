@@ -33,7 +33,8 @@ class GameEngine {
 
   isKeyDown(...keys) {
     for (const k of keys) {
-      if (this.keysDown.has(k) || this.keysDown.has(k.toLowerCase())) return true;
+      if (!k) continue;
+      if (this.keysDown.has(k) || this.keysDown.has(k.toLowerCase()) || this.keysDown.has(k.toUpperCase())) return true;
     }
     return false;
   }
@@ -239,6 +240,29 @@ class GameEngine {
   }
 
   handlePlayerMovement(dt, u) {
+    // 0. Safeguard: Check and open doors in proximity BEFORE movement
+    this.checkAutoOpenDoors(u);
+
+    // 0b. Auto-recovery if player ever gets stuck inside a non-walkable tile
+    if (this.checkWallCollision(this.player.worldX, this.player.worldZ, this.player.radius * 0.4, u)) {
+      const curGx = Math.round(this.player.worldX / u);
+      const curGy = Math.round(this.player.worldZ / u);
+      let recovered = false;
+      for (let r = 0; r <= 3 && !recovered; r++) {
+        for (let dy = -r; dy <= r && !recovered; dy++) {
+          for (let dx = -r; dx <= r && !recovered; dx++) {
+            const testGx = curGx + dx;
+            const testGy = curGy + dy;
+            if (window.dungeonManager?.isWalkable(testGx, testGy)) {
+              this.player.worldX = testGx * u;
+              this.player.worldZ = testGy * u;
+              recovered = true;
+            }
+          }
+        }
+      }
+    }
+
     let inputX = 0;
     let inputZ = 0;
 
@@ -255,8 +279,8 @@ class GameEngine {
 
     if (viewMode === 'ACTION_RPG') {
       // In Isometric Action RPG View:
-      // A / Left -> Move Left (-X)
-      // D / Right -> Move Right (+X)
+      // A / Left Arrow -> Move Left (-X screen)
+      // D / Right Arrow -> Move Right (+X screen)
       if (this.isKeyDown('a', 'ArrowLeft', 'KeyA')) {
         inputX -= 1;
       }
@@ -273,24 +297,18 @@ class GameEngine {
         if (this.isKeyDown('d', 'ArrowRight', 'KeyD')) {
           this.player.angle -= dt * 3.2;
         }
-        if (this.isKeyDown('q', 'KeyQ')) {
-          inputX -= 1;
-        }
-        if (this.isKeyDown('e', 'KeyE')) {
-          inputX += 1;
-        }
       } else {
-        // STRAFE MODE:
+        // STRAFE MODE (Default):
         if (this.isKeyDown('a', 'KeyA')) {
           inputX -= 1;
         }
         if (this.isKeyDown('d', 'KeyD')) {
           inputX += 1;
         }
-        if (this.isKeyDown('q', 'ArrowLeft', 'KeyQ')) {
+        if (this.isKeyDown('ArrowLeft')) {
           this.player.angle += dt * 3.2;
         }
-        if (this.isKeyDown('e', 'ArrowRight', 'KeyE')) {
+        if (this.isKeyDown('ArrowRight')) {
           this.player.angle -= dt * 3.2;
         }
       }
@@ -309,42 +327,41 @@ class GameEngine {
 
       const isPointerLocked = !!(window.engine3D?.isPointerLocked || document.pointerLockElement);
 
-      if (viewMode === 'ACTION_RPG' && !isPointerLocked) {
-        // Intuitive Isometric Movement (Free Mouse Cursor Mode):
-        // W = moves forward/up (-Z), S = back/down (+Z), A = left (-X), D = right (+X)
-        moveDx = normX * this.player.speed * dt;
-        moveDz = normZ * this.player.speed * dt;
+      if (viewMode === 'ACTION_RPG') {
+        // Camera-relative isometric movement:
+        // W is ALWAYS screen UP, S is screen DOWN, A is screen LEFT, D is screen RIGHT
+        const camYaw = (window.engine3D && typeof window.engine3D.cameraYawOffset === 'number')
+          ? window.engine3D.cameraYawOffset
+          : 0;
 
-        // Smoothly rotate hero to face movement direction
-        // When moving right (+X): targetAngle = -PI/2 (turns hero right)
-        // When moving left (-X): targetAngle = +PI/2 (turns hero left)
-        // When moving up (-Z): targetAngle = 0 (faces North)
-        // When moving down (+Z): targetAngle = PI (faces South)
-        const targetAngle = Math.atan2(-normX, -normZ);
-        let diff = targetAngle - this.player.angle;
-        while (diff < -Math.PI) diff += Math.PI * 2;
-        while (diff > Math.PI) diff -= Math.PI * 2;
-        this.player.angle += diff * Math.min(1.0, dt * 14);
-      } else {
-        // Camera-Relative Movement (Over-Shoulder / 1st Person / Action RPG with Mouse Lock)
-        // Uses the current camera / player angle so W ALWAYS moves forward into the view!
-        const angle = (viewMode === 'ACTION_RPG')
-          ? (typeof window.engine3D?.cameraYawOffset === 'number' ? window.engine3D.cameraYawOffset : this.player.angle)
-          : this.player.angle;
+        const forwardX = -Math.sin(camYaw);
+        const forwardZ = -Math.cos(camYaw);
+        const rightX = Math.cos(camYaw);
+        const rightZ = -Math.sin(camYaw);
 
-        const forwardX = -Math.sin(angle);
-        const forwardZ = -Math.cos(angle);
-        const rightX = Math.cos(angle);
-        const rightZ = -Math.sin(angle);
-
-        // normZ = -1 for 'W' (Forward), +1 for 'S' (Back)
-        // normX = -1 for 'A' (Strafe Left), +1 for 'D' (Strafe Right)
+        // normZ = -1 for 'W' (screen UP), +1 for 'S' (screen DOWN)
+        // normX = -1 for 'A' (screen LEFT), +1 for 'D' (screen RIGHT)
         moveDx = (forwardX * (-normZ) + rightX * normX) * this.player.speed * dt;
         moveDz = (forwardZ * (-normZ) + rightZ * normX) * this.player.speed * dt;
 
-        if (viewMode === 'ACTION_RPG' && isPointerLocked) {
-          this.player.angle = angle;
+        // Smoothly rotate hero model to face direction of movement
+        if (Math.hypot(moveDx, moveDz) > 0.0001) {
+          const targetAngle = Math.atan2(-moveDx, -moveDz);
+          let diff = targetAngle - this.player.angle;
+          while (diff < -Math.PI) diff += Math.PI * 2;
+          while (diff > Math.PI) diff -= Math.PI * 2;
+          this.player.angle += diff * Math.min(1.0, dt * 14);
         }
+      } else {
+        // Over-Shoulder / 1st Person:
+        // Forward/back along hero's facing angle
+        const forwardX = -Math.sin(this.player.angle);
+        const forwardZ = -Math.cos(this.player.angle);
+        const rightX = Math.cos(this.player.angle);
+        const rightZ = -Math.sin(this.player.angle);
+
+        moveDx = (forwardX * (-normZ) + rightX * normX) * this.player.speed * dt;
+        moveDz = (forwardZ * (-normZ) + rightZ * normX) * this.player.speed * dt;
       }
 
       // Smooth Wall Collision with Wall Sliding (Separate X and Z checks)
@@ -358,7 +375,7 @@ class GameEngine {
         this.player.worldZ = nextZ;
       }
 
-      // Check Closed Doors along the way and open them
+      // Check doors again after moving into new position
       this.checkAutoOpenDoors(u);
 
       // Footstep sound throttle
@@ -386,7 +403,6 @@ class GameEngine {
         (window.engine3D.isMouseDragging && window.engine3D.viewMode !== 'ACTION_RPG')
       );
       if (isMouseControlling) {
-        // Pointer lock or right-click drag is actively rotating the hero via mouse
         this.player.angle = window.engine3D.playerAngle;
       } else {
         window.engine3D.playerAngle = this.player.angle;
@@ -400,17 +416,21 @@ class GameEngine {
     if (newGx !== this.player.x || newGy !== this.player.y) {
       this.player.x = newGx;
       this.player.y = newGy;
-      window.dungeonManager.computeFOV(this.player.x, this.player.y);
+      window.dungeonManager?.computeFOV(this.player.x, this.player.y);
       if (window.modernMap) window.modernMap.updateStats();
     }
   }
 
   checkWallCollision(wx, wz, radius, u) {
-    // Check surrounding grid tiles
-    const minGx = Math.floor((wx - radius) / u);
-    const maxGx = Math.floor((wx + radius) / u);
-    const minGy = Math.floor((wz - radius) / u);
-    const maxGy = Math.floor((wz + radius) / u);
+    if (!window.dungeonManager) return false;
+
+    // Grid bounds check based on tile center coordinates:
+    // A tile at grid (gx, gy) has center (gx * u, gy * u) and spans [gx * u - u/2, gx * u + u/2].
+    // Any coordinate p belongs to tile Math.floor((p + u / 2) / u).
+    const minGx = Math.floor((wx - radius + u / 2) / u);
+    const maxGx = Math.floor((wx + radius + u / 2) / u);
+    const minGy = Math.floor((wz - radius + u / 2) / u);
+    const maxGy = Math.floor((wz + radius + u / 2) / u);
 
     for (let gy = minGy; gy <= maxGy; gy++) {
       for (let gx = minGx; gx <= maxGx; gx++) {
@@ -436,29 +456,26 @@ class GameEngine {
   }
 
   checkAutoOpenDoors(u) {
+    if (!window.dungeonManager) return;
     const gx = Math.round(this.player.worldX / u);
     const gy = Math.round(this.player.worldZ / u);
 
-    const neighbors = [
-      { x: gx, y: gy },
-      { x: gx + 1, y: gy },
-      { x: gx - 1, y: gy },
-      { x: gx, y: gy + 1 },
-      { x: gx, y: gy - 1 }
-    ];
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const nx = gx + dx;
+        const ny = gy + dy;
+        if (window.dungeonManager.tiles[ny]?.[nx] === 3) {
+          // Distance to door center
+          const dist = Math.hypot(this.player.worldX - nx * u, this.player.worldZ - ny * u);
+          if (dist < 2.0) {
+            window.dungeonManager.tiles[ny][nx] = 4; // Open door
+            const doorGroup = window.engine3D?.doorMeshes.get(`${nx},${ny}`);
+            if (doorGroup) doorGroup.rotation.y = -Math.PI / 2;
 
-    for (const n of neighbors) {
-      if (window.dungeonManager.tiles[n.y]?.[n.x] === 3) {
-        // Distance check
-        const dist = Math.hypot(this.player.worldX - n.x * u, this.player.worldZ - n.y * u);
-        if (dist < 1.35) {
-          window.dungeonManager.tiles[n.y][n.x] = 4; // Open door
-          const doorGroup = window.engine3D?.doorMeshes.get(`${n.x},${n.y}`);
-          if (doorGroup) doorGroup.rotation.y = -Math.PI / 2;
-
-          this.addLog("You pushed open the heavy wooden door.", 'gray');
-          if (window.gameAudio) window.gameAudio.playChest();
-          window.dungeonManager.computeFOV(this.player.x, this.player.y);
+            this.addLog("You pushed open the heavy wooden door.", 'gray');
+            if (window.gameAudio) window.gameAudio.playChest();
+            window.dungeonManager.computeFOV(this.player.x, this.player.y);
+          }
         }
       }
     }
@@ -1386,13 +1403,19 @@ class GameEngine {
     window.addEventListener('keydown', (e) => {
       if (this.gameState !== 'PLAYING') return;
 
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+        e.preventDefault();
+      }
+
       this.keysDown.add(e.key);
       this.keysDown.add(e.key.toLowerCase());
-      if (e.code) this.keysDown.add(e.code);
+      if (e.code) {
+        this.keysDown.add(e.code);
+        this.keysDown.add(e.code.toLowerCase());
+      }
 
       // Space or F -> Melee Attack
       if (e.key === ' ' || e.key === 'f' || e.key === 'F') {
-        e.preventDefault();
         this.triggerPlayerAttack();
         return;
       }
@@ -1449,11 +1472,17 @@ class GameEngine {
     window.addEventListener('keyup', (e) => {
       this.keysDown.delete(e.key);
       this.keysDown.delete(e.key.toLowerCase());
-      if (e.code) this.keysDown.delete(e.code);
+      if (e.code) {
+        this.keysDown.delete(e.code);
+        this.keysDown.delete(e.code.toLowerCase());
+      }
     });
 
-    // Clear keys if window loses focus
+    // Clear keys if window loses or regains focus
     window.addEventListener('blur', () => {
+      this.keysDown.clear();
+    });
+    window.addEventListener('focus', () => {
       this.keysDown.clear();
     });
   }
