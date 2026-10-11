@@ -22,7 +22,18 @@ class SoundEngine {
       }
     }
     if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      this.ctx.resume().catch(() => {});
+    }
+
+    if (!this._unlockHooked && typeof window !== 'undefined') {
+      this._unlockHooked = true;
+      const unlock = () => {
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume().catch(() => {});
+        }
+      };
+      window.addEventListener('pointerdown', unlock, { passive: true });
+      window.addEventListener('keydown', unlock, { passive: true });
     }
   }
 
@@ -138,26 +149,40 @@ class SoundEngine {
     if (!this.ctx) return;
 
     const now = this.ctx.currentTime;
-    if (type === 'fireball') {
+    if (type === 'fireball' || type === 'meteor') {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(320, now);
-      osc.frequency.exponentialRampToValueAtTime(60, now + 0.28);
+      osc.frequency.setValueAtTime(type === 'meteor' ? 240 : 320, now);
+      osc.frequency.exponentialRampToValueAtTime(type === 'meteor' ? 35 : 60, now + 0.35);
 
       gain.gain.setValueAtTime(0.45 * this.masterVolume, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.36);
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
       osc.start();
-      osc.stop(now + 0.3);
-    } else if (type === 'teleport') {
+      osc.stop(now + 0.38);
+    } else if (type === 'missile') {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(540, now);
+      osc.frequency.exponentialRampToValueAtTime(180, now + 0.22);
+
+      gain.gain.setValueAtTime(0.32 * this.masterVolume, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(now + 0.25);
+    } else if (type === 'teleport' || type === 'dash') {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = 'sine';
       osc.frequency.setValueAtTime(220, now);
-      osc.frequency.exponentialRampToValueAtTime(1100, now + 0.25);
+      osc.frequency.exponentialRampToValueAtTime(1200, now + 0.25);
 
       gain.gain.setValueAtTime(0.3 * this.masterVolume, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
@@ -166,6 +191,20 @@ class SoundEngine {
       gain.connect(this.ctx.destination);
       osc.start();
       osc.stop(now + 0.3);
+    } else if (type === 'poison') {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(480, now);
+      osc.frequency.linearRampToValueAtTime(280, now + 0.18);
+
+      gain.gain.setValueAtTime(0.28 * this.masterVolume, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(now + 0.22);
     } else if (type === 'heal') {
       [330, 440, 660].forEach((freq, idx) => {
         const osc = this.ctx.createOscillator();
@@ -181,6 +220,8 @@ class SoundEngine {
         osc.start(now + idx * 0.08);
         osc.stop(now + idx * 0.08 + 0.22);
       });
+    } else {
+      this.playAttack();
     }
   }
 

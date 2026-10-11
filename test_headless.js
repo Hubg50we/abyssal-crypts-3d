@@ -66,9 +66,9 @@ class HeadlessTester {
     // 1.2 Dungeon Generator Endpoint
     const dungeon = await this.httpPost('/api/dungeon/generate', { floor: 1, width: 48, height: 32 });
     this.assert(dungeon && dungeon.tiles && dungeon.tiles.length === 32, 'POST /api/dungeon/generate returns 48x32 grid');
-    this.assert(dungeon.spawn && dungeon.stairs, 'Dungeon includes valid spawn and stairs objects');
-    this.assert(Array.isArray(dungeon.monsters) && dungeon.monsters.length > 0, 'Dungeon populates monsters');
-    this.assert(Array.isArray(dungeon.items) && dungeon.items.length > 0, 'Dungeon populates loot items');
+    this.assert(!!(dungeon && dungeon.spawn && dungeon.stairs), 'Dungeon includes valid spawn and stairs objects');
+    this.assert(!!(dungeon && Array.isArray(dungeon.monsters) && dungeon.monsters.length > 0), 'Dungeon populates monsters');
+    this.assert(!!(dungeon && Array.isArray(dungeon.items) && dungeon.items.length > 0), 'Dungeon populates loot items');
 
     // 1.3 Leaderboard Endpoint
     const scoreRes = await this.httpPost('/api/scores', {
@@ -84,7 +84,7 @@ class HeadlessTester {
 
     const scores = await this.httpGet('/api/scores');
     this.assert(Array.isArray(scores) && scores.length > 0, 'GET /api/scores returns score list');
-    const hasEntry = scores.some(s => s.name === 'AIBot_Hero');
+    const hasEntry = !!(Array.isArray(scores) && scores.some(s => s.name === 'AIBot_Hero'));
     this.assert(hasEntry, 'Leaderboard contains newly saved test score');
 
     // 1.4 Test Report Endpoint

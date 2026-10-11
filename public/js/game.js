@@ -860,9 +860,11 @@ class GameEngine {
       }
 
       case 'blink': {
-        // Mage: Astral Shift / Teleport
-        const targetX = px + Math.sin(this.player.angle) * 5.0;
-        const targetZ = pz + Math.cos(this.player.angle) * 5.0;
+        // Mage: Astral Shift / Teleport forward in facing direction
+        const fwdX = -Math.sin(this.player.angle);
+        const fwdZ = -Math.cos(this.player.angle);
+        const targetX = px + fwdX * 5.0;
+        const targetZ = pz + fwdZ * 5.0;
         if (!this.checkWallCollision(targetX, targetZ, this.player.radius, u)) {
           this.player.worldX = targetX;
           this.player.worldZ = targetZ;
@@ -879,12 +881,15 @@ class GameEngine {
       }
 
       case 'shadow_strike': {
-        // Rogue: Shadow Dash
-        const dashX = px + Math.sin(this.player.angle) * 4.0;
-        const dashZ = pz + Math.cos(this.player.angle) * 4.0;
+        // Rogue: Shadow Dash forward into foes
+        const fwdX = -Math.sin(this.player.angle);
+        const fwdZ = -Math.cos(this.player.angle);
+        const dashX = px + fwdX * 4.0;
+        const dashZ = pz + fwdZ * 4.0;
         if (!this.checkWallCollision(dashX, dashZ, this.player.radius, u)) {
           this.player.worldX = dashX;
           this.player.worldZ = dashZ;
+          try { if (window.gameAudio) window.gameAudio.playSpell('dash'); } catch (_) {}
           this.triggerPlayerAttack();
           this.addLog("Shadow Dash pierced through the darkness!", 'cyan');
         }
@@ -906,6 +911,7 @@ class GameEngine {
         if (target) {
           const idx = window.dungeonManager.monsters.indexOf(target);
           if (idx !== -1 && target.hp > 0 && !target.isDead) this.damageMonster(target, idx);
+          try { if (window.gameAudio) window.gameAudio.playSpell('poison'); } catch (_) {}
           this.addLog("Poison Dart hit " + target.name + "!", 'green');
         }
         break;

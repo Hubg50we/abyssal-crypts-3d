@@ -101,6 +101,18 @@ class Engine3D {
       oldCanvas.replaceWith(this.renderer.domElement);
     }
 
+    // Responsive Canvas Resize Listener
+    window.addEventListener('resize', () => {
+      if (!this.container || !this.renderer || !this.camera) return;
+      const w = this.container.clientWidth;
+      const h = this.container.clientHeight;
+      if (w > 0 && h > 0) {
+        this.camera.aspect = w / h;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(w, h);
+      }
+    });
+
     // 4. Ambient & Player Torch Light
     const ambientLight = new THREE.AmbientLight(0x2d3748, 0.85);
     this.scene.add(ambientLight);
@@ -738,9 +750,33 @@ class Engine3D {
     this.dungeonMeshes.push(stairsLight);
   }
 
+  disposeNode(node) {
+    if (!node) return;
+    if (node.geometry) {
+      try { node.geometry.dispose(); } catch (_) {}
+    }
+    if (node.material) {
+      if (Array.isArray(node.material)) {
+        node.material.forEach(m => {
+          if (m.map) try { m.map.dispose(); } catch (_) {}
+          try { m.dispose(); } catch (_) {}
+        });
+      } else {
+        if (node.material.map) try { node.material.map.dispose(); } catch (_) {}
+        try { node.material.dispose(); } catch (_) {}
+      }
+    }
+    if (node.children && node.children.length > 0) {
+      for (const child of node.children) {
+        this.disposeNode(child);
+      }
+    }
+  }
+
   clearDungeon() {
     for (const mesh of this.dungeonMeshes) {
       this.scene.remove(mesh);
+      this.disposeNode(mesh);
     }
     this.dungeonMeshes = [];
 
@@ -748,16 +784,27 @@ class Engine3D {
       this.scene.remove(wt.light);
       this.scene.remove(wt.sconce);
       this.scene.remove(wt.flame);
+      this.disposeNode(wt.sconce);
+      this.disposeNode(wt.flame);
     }
     this.wallTorches = [];
 
-    this.monsterMeshes.forEach(mesh => this.scene.remove(mesh));
+    this.monsterMeshes.forEach(mesh => {
+      this.scene.remove(mesh);
+      this.disposeNode(mesh);
+    });
     this.monsterMeshes.clear();
 
-    this.itemMeshes.forEach(mesh => this.scene.remove(mesh));
+    this.itemMeshes.forEach(mesh => {
+      this.scene.remove(mesh);
+      this.disposeNode(mesh);
+    });
     this.itemMeshes.clear();
 
-    this.otherPlayerMeshes.forEach(mesh => this.scene.remove(mesh));
+    this.otherPlayerMeshes.forEach(mesh => {
+      this.scene.remove(mesh);
+      this.disposeNode(mesh);
+    });
     this.otherPlayerMeshes.clear();
 
     this.doorMeshes.clear();
@@ -852,6 +899,7 @@ class Engine3D {
       const monsterData = mesh.userData?.monster || (typeof idOrMonster === 'object' ? idOrMonster : null);
       this.triggerMonsterKillVFX(mesh.position.x, mesh.position.y, mesh.position.z, monsterData);
       this.scene.remove(mesh);
+      this.disposeNode(mesh);
       if (id) this.monsterMeshes.delete(id);
     }
   }
@@ -1393,6 +1441,7 @@ class Engine3D {
       s.mesh.scale.multiplyScalar(1.04);
       if (s.life <= 0) {
         this.scene.remove(s.mesh);
+        this.disposeNode(s.mesh);
         this.slashMeshes.splice(i, 1);
       }
     }
@@ -1405,6 +1454,7 @@ class Engine3D {
       dp.sprite.material.opacity = Math.max(0, dp.life / dp.maxLife);
       if (dp.life <= 0) {
         this.scene.remove(dp.sprite);
+        this.disposeNode(dp.sprite);
         this.damagePopups.splice(i, 1);
       }
     }
@@ -1418,6 +1468,7 @@ class Engine3D {
       if (proj.progress >= 1.0) {
         this.spawnParticleExplosion(proj.end.x, proj.end.y, proj.end.z, proj.color, 18);
         this.scene.remove(proj.mesh);
+        this.disposeNode(proj.mesh);
         this.projectiles.splice(i, 1);
       }
     }
@@ -1433,6 +1484,7 @@ class Engine3D {
 
       if (p.userData.life <= 0 || p.position.y <= 0) {
         this.scene.remove(p);
+        this.disposeNode(p);
         this.particles3D.splice(i, 1);
       }
     }
@@ -1459,8 +1511,14 @@ class Engine3D {
       }
 
       if (vfx.life <= 0) {
-        if (vfx.shockwave) this.scene.remove(vfx.shockwave);
-        if (vfx.soulOrb) this.scene.remove(vfx.soulOrb);
+        if (vfx.shockwave) {
+          this.scene.remove(vfx.shockwave);
+          this.disposeNode(vfx.shockwave);
+        }
+        if (vfx.soulOrb) {
+          this.scene.remove(vfx.soulOrb);
+          this.disposeNode(vfx.soulOrb);
+        }
         this.killVFXList.splice(i, 1);
       }
     }
